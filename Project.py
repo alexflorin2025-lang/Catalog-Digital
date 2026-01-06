@@ -25,13 +25,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Initializare Baza de Date (Adăugăm coloană pentru mesaje și note)
+# 3. Initializare Baza de Date
 def init_db():
     conn = sqlite3.connect('attendance_web.db', check_same_thread=False)
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS grades (dt TEXT, cl TEXT, name TEXT, sub TEXT, val INT)')
     c.execute('CREATE TABLE IF NOT EXISTS absences (dt TEXT, cl TEXT, name TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS messages (dt TEXT, name TEXT, sub TEXT, msg TEXT)') # Tabel mesaje detaliat
+    c.execute('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, name TEXT, sub TEXT, msg TEXT)')
     c.execute('CREATE TABLE IF NOT EXISTS conduct (name TEXT, val INT)')
     conn.commit()
     return conn
@@ -86,46 +86,49 @@ else:
                         conn.execute("INSERT INTO absences VALUES (?,?,?)", (datetime.now().strftime("%d-%m"), cl_sel, elev))
                         conn.commit(); st.toast("Absent!")
                 
-                # SECȚIUNE MUSTRARE CU TEXT
-                st.markdown("---")
-                motiv = st.text_area("Motivul mustrării", key=f"txt_{elev}", placeholder="Ex: Deranjarea orei...")
+                motiv = st.text_area("Motivul mustrării", key=f"txt_{elev}", placeholder="Scrie aici...")
                 if st.button("Trimite Mustrare", key=f"bm_{elev}"):
                     if motiv:
-                        conn.execute("INSERT INTO messages VALUES (?,?,?,?)", (datetime.now().strftime("%d-%m"), elev, st.session_state.materia, motiv))
+                        conn.execute("INSERT INTO messages (dt, name, sub, msg) VALUES (?,?,?,?)", (datetime.now().strftime("%d-%m"), elev, st.session_state.materia, motiv))
                         conn.commit(); st.toast("Mustrare trimisă!")
-                    else: st.warning("Scrie motivul mai întâi!")
 
     # --- INTERFAȚA PĂRINTE ---
     elif st.session_state.role == "parent":
-        st.markdown(f"### 👋 Salut, {st.session_state.nume_elev}")
+        st.markdown(f"### 👋 {st.session_state.nume_elev}")
         st.write("**Note:**")
         st.dataframe(pd.read_sql(f"SELECT dt as Data, sub as Materia, val as Nota FROM grades WHERE name='{st.session_state.nume_elev}'", conn), use_container_width=True)
         
-        st.write("**Observații Profesori:**")
-        m_df = pd.read_sql(f"SELECT dt as Data, sub as Materia, msg as Motiv FROM messages WHERE name='{st.session_state.nume_elev}'", conn)
-        if not m_df.empty: st.error(m_df.to_html(index=False), unsafe_allow_html=True)
+        st.write("**Observații:**")
+        m_df = pd.read_sql(f"SELECT sub as Materia, msg as Motiv FROM messages WHERE name='{st.session_state.nume_elev}'", conn)
+        if not m_df.empty:
+            # FIX: Folosim st.markdown pentru HTML în loc de st.error
+            st.markdown(f'<div style="background-color:rgba(255,75,75,0.2); padding:10px; border-radius:10px; border:1px solid #ff4b4b;">{m_df.to_html(index=False)}</div>', unsafe_allow_html=True)
         else: st.success("Nicio observație.")
 
-    # --- INTERFAȚA DIRECTOARE (SCĂDERE NOTE MANUALĂ) ---
+    # --- INTERFAȚA DIRECTOARE ---
     elif st.session_state.role == "admin":
-        st.markdown("### 🏛️ Panou Control Directoare")
-        e_s = st.selectbox("Alege Elevul", CLASE["6B"] + CLASE["7A"])
+        st.markdown("### 🏛️ Panou Control")
+        e_s = st.selectbox("Elev", CLASE["6B"] + CLASE["7A"])
         
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.write("**Observații primite:**")
-            msgs = pd.read_sql(f"SELECT dt, sub, msg FROM messages WHERE name='{e_s}'", conn)
-            st.write(msgs)
-        with col_b:
-            purtare_act = pd.read_sql(f"SELECT val FROM conduct WHERE name='{e_s}'", conn)
-            val_p = purtare_act['val'].iloc[0] if not purtare_act.empty else 10
-            st.subheader(f"Purtare actuală: {val_p}")
-            
-            noua_nota = st.number_input("Modifică Nota la Purtare", 1, 10, int(val_p))
-            if st.button("ACTUALIZEAZĂ NOTA"):
-                conn.execute("DELETE FROM conduct WHERE name=?", (e_s,))
-                conn.execute("INSERT INTO conduct VALUES (?,?)", (e_s, noua_nota))
-                conn.commit(); st.success(f"Nota a fost setată la {noua_nota}!")
+        # Scădere manuală purtare
+        p_act = pd.read_sql(f"SELECT val FROM conduct WHERE name='{e_s}'", conn)
+        v_p = p_act['val'].iloc[0] if not p_act.empty else 10
+        noua_p = st.number_input("Setează Nota Purtare", 1, 10, int(v_p))
+        if st.button("SALVEAZĂ PURTARE"):
+            conn.execute("DELETE FROM conduct WHERE name=?", (e_s,))
+            conn.execute("INSERT INTO conduct VALUES (?,?)", (e_s, noua_p))
+            conn.commit(); st.success("Purtare actualizată!")
+
+        # Vizualizare și ȘTERGERE observații
+        st.write("---")
+        st.write("**Mesaje de la profesori:**")
+        msgs = pd.read_sql(f"SELECT id, sub, msg FROM messages WHERE name='{e_s}'", conn)
+        for index, row in msgs.iterrows():
+            col_m, col_b = st.columns([3, 1])
+            col_m.write(f"[{row['sub']}] {row['msg']}")
+            if col_b.button("Șterge", key=f"del_{row['id']}"):
+                conn.execute("DELETE FROM messages WHERE id=?", (row['id'],))
+                conn.commit(); st.rerun()
 
     if st.button("DECONECTARE", type="secondary"):
         st.session_state.logged_in = False; st.rerun()
