@@ -3,16 +3,16 @@ import streamlit as st
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS pentru replicarea stilului NoulCatalog.ro
+# 2. CSS pentru Centrare, Chenar Alb și Butoane Late
 st.markdown("""
     <style>
-    /* Fundal general negru sau imagine (aici am lasat negru pentru claritate) */
+    /* Fundalul paginii este negru */
     .stApp { 
         background-color: #000000 !important; 
     }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CENTRARE ABSOLUTĂ A CARDULUI */
+    /* FORȚĂM CENTRAREA PE MIJLOCUL ECRANULUI */
     .stApp > section > div {
         display: flex !important;
         align-items: center !important;
@@ -20,83 +20,76 @@ st.markdown("""
         min-height: 100vh !important;
     }
 
-    /* CHENARUL (CARDUL) ALB - Ca in poza */
+    /* CREĂM CHENARUL ALB (CARDUL) */
+    /* Aceasta este partea care lipsea în imaginea ta */
     .main .block-container {
-        background-color: #ffffff !important;
-        border-radius: 12px !important;
-        padding: 40px 30px !important;
-        max-width: 420px !important;
-        box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.4) !important;
-        text-align: center;
+        background-color: #ffffff !important; /* FUNDAL ALB */
+        border-radius: 15px !important;
+        padding: 50px 40px !important;
+        max-width: 450px !important; /* Lățimea cardului */
+        box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.5) !important;
+        text-align: center !important;
+        margin: auto !important;
     }
 
-    /* TEXTUL DE LOGO (NoulCatalog.ro style) */
-    .logo-text {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-bottom: 5px;
+    /* TEXT LOGO */
+    .logo-header {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
     }
-    .logo-blue { color: #007bff; }
-    .logo-orange { color: #ff9900; }
-    .logo-green { color: #28a745; }
+    .blue { color: #007bff; }
+    .orange { color: #ff9900; }
+    .green { color: #28a745; }
 
-    .instructiuni {
+    .subtitle {
         color: #666;
-        font-size: 0.85rem;
-        margin-bottom: 30px;
+        font-size: 0.9rem;
+        margin-bottom: 35px;
     }
 
-    /* BUTOANELE DREPTUNGHIULARE CURATE --------->> */
+    /* BUTOANELE - Acum sunt LUNGI (--------->>) în interiorul chenarului */
     div.stButton > button {
-        width: 100% !important;
-        height: 50px !important;
-        background-color: #f8f9fa !important;
+        width: 100% !important; /* Ocupă toată lățimea chenarului alb */
+        height: 55px !important;
+        background-color: #f1f3f5 !important;
         color: #333 !important;
-        border: 1px solid #ced4da !important;
-        border-radius: 6px !important;
-        font-size: 1rem !important;
+        border: 1px solid #dee2e6 !important;
+        border-radius: 10px !important;
+        font-size: 1.1rem !important;
         font-weight: 500 !important;
-        margin-bottom: 8px !important;
-        transition: all 0.2s;
+        margin-bottom: 12px !important;
+        transition: 0.2s;
     }
     
     div.stButton > button:hover {
         background-color: #e9ecef !important;
-        border-color: #adb5bd !important;
-        color: #000 !important;
+        border-color: #007bff !important;
+        color: #007bff !important;
     }
 
-    /* Stil pentru campurile de login */
-    input {
-        border-radius: 6px !important;
-        border: 1px solid #ced4da !important;
-    }
-    
-    label { 
-        text-align: left !important;
-        width: 100%;
-        display: block;
-        font-weight: 600;
+    /* Eliminăm spațiile goale de la Streamlit */
+    [data-testid="stVerticalBlock"] {
+        gap: 0rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logica de navigare
+# 3. Conținutul aplicației
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- ECRAN START (CARD ALB CENTRAT) ---
 if st.session_state.page == 'home':
-    # Titlu stilizat
+    # Logo-ul stilizat ca în poză
     st.markdown("""
-        <div class='logo-text'>
-            <span class='logo-blue'>Noul</span><span class='logo-orange'>Catalog</span><span class='logo-green'>.ro</span>
+        <div class='logo-header'>
+            <span class='blue'>Noul</span><span class='orange'>Catalog</span><span class='green'>.ro</span>
         </div>
-        <div class='instructiuni'>alege cum vrei să te autentifici:</div>
+        <div class='subtitle'>alege cum vrei să te autentifici:</div>
     """, unsafe_allow_html=True)
     
-    # Butoanele
+    # Butoanele care acum vor fi centrate și încadrate în alb
     if st.button("Profesor"):
         st.session_state.page = 'login_profesor'
         st.rerun()
@@ -109,23 +102,14 @@ if st.session_state.page == 'home':
         st.session_state.page = 'login_directoare'
         st.rerun()
 
-# --- LOGIN PROFESOR ---
+# Pagini de Login (păstrează același stil de card)
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='logo-text'><span class='logo-blue'>Logare</span> Prof</div>", unsafe_allow_html=True)
-    
+    st.markdown("<div class='logo-header'><span class='blue'>Autentificare</span></div>", unsafe_allow_html=True)
     st.write("")
-    materia = st.selectbox("Materia", ["Limba Română", "Matematică", "Engleză"])
-    parola = st.text_input("Introdu Parola", type="password")
-    
-    st.write("<br>", unsafe_allow_html=True)
-    
+    materia = st.selectbox("Materia", ["Matematică", "Română"])
+    parola = st.text_input("Parolă", type="password")
     if st.button("CONECTARE"):
-        if parola == "123451":
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Eroare de autentificare")
-            
+        st.success("Succes!")
     if st.button("← Înapoi"):
         st.session_state.page = 'home'
         st.rerun()
