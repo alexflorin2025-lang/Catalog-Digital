@@ -1,161 +1,116 @@
 import streamlit as st
 
-# 1. Configurare Pagina - Layout Centered (cel mai sigur pentru mobil)
+# 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS PREMIUM - Fără chenare, doar elemente flotante
+# 2. CSS PREMIUM - Chenar Albastru Centrat
 st.markdown("""
     <style>
-    /* ASCUNDEM TOT CE E IN PLUS */
+    /* Fundal general negru */
+    .stApp { background-color: #000000 !important; }
     header, footer, #MainMenu {visibility: hidden !important;}
-    
-    /* FUNDAL NEGRU PUR (AMOLED) */
-    .stApp {
-        background-color: #000000 !important;
-    }
 
-    /* ELIMINĂM ORICE CHENAR SAU BACKGROUND LA CONTAINER */
+    /* CHENARUL CENTRAL (Cardul) */
     .main .block-container {
-        background-color: transparent !important; /* Fara fundal la cutie */
-        border: none !important; /* Fara bordura */
-        box_shadow: none !important; /* Fara umbra */
-        padding-top: 60px !important;
-        max-width: 550px !important;
+        background-color: #0d1117 !important;
+        border: 1px solid #1f6feb !important; /* Bordură subțire albastră */
+        border-radius: 20px !important;
+        padding: 60px 40px !important;
+        margin-top: 50px !important;
+        max-width: 450px !important;
+        box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.5) !important;
     }
 
-    /* TITLU STIL "NOUL CATALOG" */
-    .logo-text {
+    /* TITLU */
+    .titlu-principal {
         text-align: center;
-        color: #fff;
-        font-size: 2.5rem;
+        color: #ffffff;
+        font-size: 2.2rem;
         font-weight: 700;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
-    }
-    
-    .accent-blue {
-        color: #2E9AFE; /* Albastru specific aplicatiilor scolare moderne */
-    }
-    
-    .subtitlu {
-        text-align: center;
-        color: #888;
-        font-size: 1rem;
-        margin-bottom: 50px;
-        font-weight: 400;
+        margin-bottom: 40px;
     }
 
-    /* BUTOANE "GHOST" PREMIUM */
-    /* Fara fundal, doar contur fin care se aprinde */
+    /* BUTOANELE - Late și centrate în chenar --------->> */
     div.stButton > button {
         width: 100% !important;
-        height: 75px !important;
-        background-color: #111 !important; /* Foarte inchis, aproape negru */
+        height: 65px !important;
+        background-color: #161b22 !important;
         color: white !important;
-        border: 1px solid #333 !important; /* Contur subtil */
-        border-radius: 12px !important; /* Rotunjire medie ca la Apple */
-        font-size: 1.2rem !important;
+        border: 1px solid #30363d !important;
+        border-radius: 12px !important;
+        font-size: 1.1rem !important;
         font-weight: 500 !important;
         margin-bottom: 20px !important;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify_content: center;
+        transition: 0.3s ease;
     }
     
-    /* Efect Hover - Se face albastru */
     div.stButton > button:hover {
-        border-color: #2E9AFE !important;
-        color: #2E9AFE !important;
-        background-color: #000 !important;
-        transform: scale(1.02);
+        border-color: #58a6ff !important;
+        background-color: #1f242c !important;
     }
 
-    /* INPUT-URI CURATE */
-    input {
-        background-color: #111 !important;
+    /* Stil pentru paginile de login */
+    input, .stSelectbox > div > div {
+        background-color: #0d1117 !important;
         color: white !important;
-        border: 1px solid #333 !important;
-        border-radius: 10px !important;
-        height: 55px !important;
+        border: 1px solid #30363d !important;
+        height: 50px !important;
     }
     
-    div[data-baseweb="select"] > div {
-        background-color: #111 !important;
-        border-color: #333 !important;
-        color: white !important;
-        border-radius: 10px !important;
-    }
-    
-    label { color: #888 !important; font-size: 0.9rem !important; }
-
-    /* Linie decorativa subtila */
-    .separator {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #333, transparent);
-        margin: 40px 0;
-    }
+    label { color: #8b949e !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logica Aplicatiei
+# 3. Logica de navigare
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- ECRAN START (Stil Noul Catalog) ---
+# --- ECRAN START ---
 if st.session_state.page == 'home':
-    # Titlu cu accent albastru
-    st.markdown("<div class='logo-text'>Catalog <span class='accent-blue'>Digital</span></div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitlu'>Platformă de management școlar</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titlu-principal'>Catalog Digital</div>", unsafe_allow_html=True)
     
-    st.write("") # Spatiu
-    
-    # Butoane curate
-    if st.button("👨‍🏫  Profesor"):
+    # Butoanele centrate în chenar
+    if st.button("Profesor"):
         st.session_state.page = 'login_profesor'
         st.rerun()
 
-    if st.button("👨‍👩‍👧  Părinte / Elev"):
+    if st.button("Părinte / Elev"):
         st.session_state.page = 'login_parinte'
         st.rerun()
 
-    if st.button("🔒  Director"):
-        st.session_state.page = 'login_Director'
+    if st.button("Director"):
+        st.session_state.page = 'login_director'
         st.rerun()
-        
-    st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#444; font-size:0.8rem;'>v2.0 Secure System</p>", unsafe_allow_html=True)
 
-# --- LOGIN PROFESOR (Minimalist) ---
+# --- LOGIN PROFESOR ---
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='logo-text'>Autentificare</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitlu'>Acces cadru didactic</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titlu-principal'>Logare Profesor</div>", unsafe_allow_html=True)
     
-    st.write("")
-    materia = st.selectbox("Disciplină", ["Limba Română", "Matematică", "Engleză", "Istorie"])
-    
-    st.write("")
-    parola = st.text_input("Parolă", type="password")
+    materia = st.selectbox("Selectați Materia:", ["Matematică", "Română", "Engleză", "Istorie"])
+    parola = st.text_input("Parolă:", type="password")
     
     st.write("<br>", unsafe_allow_html=True)
-    
-    # Butonul de conectare il facem putin diferit (plin) prin CSS inline (hack) sau il lasam standard
-    if st.button("Acces în Catalog"):
+    if st.button("Conectare"):
         if parola == "123451":
-            st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia, "page": "main"})
+            st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia})
             st.rerun()
         else:
-            st.error("Date incorecte")
+            st.error("Acces refuzat")
             
-    if st.button("← Anulează"):
+    if st.button("Înapoi"):
         st.session_state.page = 'home'
         st.rerun()
 
-# --- CONTINUT DUPA LOGIN ---
-elif st.session_state.get('logged_in'):
-    st.markdown(f"<div class='logo-text'>{st.session_state.materia}</div>", unsafe_allow_html=True)
-    st.success("Bine ai venit!")
-    if st.button("Ieșire"):
-        st.session_state.clear()
+# --- LOGIN DIRECTOR ---
+elif st.session_state.page == 'login_director':
+    st.markdown("<div class='titlu-principal'>Logare Director</div>", unsafe_allow_html=True)
+    
+    parola = st.text_input("Parolă Director:", type="password")
+    
+    st.write("<br>", unsafe_allow_html=True)
+    if st.button("Acces Panou Control"):
+        st.success("Sistem autorizat")
+    
+    if st.button("Înapoi"):
+        st.session_state.page = 'home'
         st.rerun()
-
