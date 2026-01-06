@@ -3,85 +3,92 @@ import sqlite3
 from datetime import datetime
 
 # 1. Configurare Pagina
-st.set_page_config(page_title="Catalog Digital Scolar v20", layout="centered")
+st.set_page_config(page_title="Catalog Scolar Premium v21", layout="centered")
 
-# 2. CSS DARK PREMIUM - Design Lung cu Emoji
+# 2. CSS ULTRA-DARK & LONG - Design extins la maximum
 st.markdown("""
     <style>
     /* Fundalul general */
     .stApp {
-        background-color: #0d1117 !important;
+        background-color: #05070a !important;
     }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CARDUL CENTRAL - Extins pe verticala */
+    /* CARDUL CENTRAL - Lungime Maxima */
     .main .block-container {
-        background-color: #161b22 !important;
-        border: 2px solid #30363d !important;
-        border-radius: 25px;
-        padding: 60px 45px !important; /* Padding foarte mare pentru lungime */
-        margin-top: 30px !important;
-        box-shadow: 0px 20px 50px rgba(0, 0, 0, 0.7);
-        max-width: 500px !important;
+        background-color: #0d1117 !important;
+        border: 2px solid #1f6feb !important;
+        border-radius: 30px;
+        padding: 80px 50px !important; /* Padding gigant pentru inaltime */
+        margin-top: 20px !important;
+        margin-bottom: 50px !important;
+        box-shadow: 0px 25px 60px rgba(0, 0, 0, 0.8);
+        max-width: 550px !important;
     }
 
-    /* TITLUL SI SUBTITLUL */
-    .titlu-mare {
+    /* TITLUL SI DECORATIUNI */
+    .titlu-ultra {
         text-align: center;
         color: #58a6ff;
-        font-size: 2.6rem;
-        font-weight: 800;
-        margin-bottom: 10px;
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 5px;
+        text-shadow: 2px 2px 10px rgba(88, 166, 255, 0.3);
     }
     
-    .subtitlu-text {
+    .status-bar {
         text-align: center;
-        color: #8b949e;
-        font-size: 1.1rem;
-        margin-bottom: 50px;
+        color: #238636;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 60px;
+        letter-spacing: 2px;
     }
 
-    /* BUTOANELE MARI CU EMOJI */
+    /* BUTOANELE "KING SIZE" CU EMOJI */
     .stButton > button {
         width: 100% !important;
-        height: 85px !important; /* Butoane foarte inalte pentru a lungi pagina */
-        background-color: #21262d !important;
+        height: 110px !important; /* Butoane extrem de inalte */
+        background-color: #161b22 !important;
         color: white !important;
-        border: 1px solid #30363d !important;
-        border-radius: 18px !important;
-        font-size: 1.3rem !important;
-        font-weight: 600 !important;
-        margin-bottom: 25px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 2px solid #30363d !important;
+        border-radius: 20px !important;
+        font-size: 1.4rem !important;
+        font-weight: bold !important;
+        margin-bottom: 40px !important; /* Spatiu mare intre butoane */
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.4) !important;
+        transition: 0.4s ease-in-out;
     }
     
     .stButton > button:hover {
         border-color: #58a6ff !important;
-        background-color: #30363d !important;
-        transform: scale(1.02);
+        background-color: #1f242c !important;
+        transform: translateY(-5px);
+        box-shadow: 0px 10px 25px rgba(88, 166, 255, 0.2) !important;
     }
 
-    /* INPUT-URILE DE LOGIN */
+    /* INPUT-URILE DE LOGIN GIGANT */
     input {
-        background-color: #0d1117 !important;
+        background-color: #05070a !important;
         color: white !important;
-        border: 2px solid #30363d !important;
-        border-radius: 12px !important;
-        height: 60px !important;
+        border: 2px solid #1f6feb !important;
+        border-radius: 15px !important;
+        height: 70px !important; /* Input mai inalt */
+        font-size: 1.2rem !important;
     }
     
     label { 
         color: #f0f6fc !important; 
-        font-size: 1.1rem !important;
-        margin-bottom: 12px !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 15px !important;
+        display: block;
     }
 
-    /* Spatiere extra intre elemente */
-    .spacer {
-        height: 30px;
+    /* Linie de design */
+    .glow-line {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #1f6feb, transparent);
+        margin: 40px 0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -90,57 +97,55 @@ st.markdown("""
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- PAGINA DE START (Design Lung cu Emoji) ---
+# --- PAGINA DE START (ULTRA-LONG) ---
 if st.session_state.page == 'home':
-    st.markdown("<div class='titlu-mare'>🎓 Catalog Digital</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitlu-text'>Bine ați venit! Vă rugăm să alegeți profilul dumneavoastră:</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titlu-ultra'>🎓 CATALOG</div>", unsafe_allow_html=True)
+    st.markdown("<div class='status-bar'>● SISTEM ONLINE ACTIV</div>", unsafe_allow_html=True)
     
-    st.markdown("<div class='spacer'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#8b949e;'>Bine ați venit în platforma securizată a școlii dumneavoastră. Vă rugăm să selectați o opțiune de mai jos pentru a continua.</p>", unsafe_allow_html=True)
     
-    if st.button("👨‍🏫 Accesează Modul Profesor"):
+    st.markdown("<div class='glow-line'></div>", unsafe_allow_html=True)
+    
+    # Secțiune Butoane Extinse
+    if st.button("👨‍🏫 ACCES MODUL PROFESOR"):
         st.session_state.page = 'login_profesor'
         st.rerun()
 
-    if st.button("👪 Vizualizare Părinte / Elev"):
+    if st.button("👪 MODUL PĂRINTE / ELEV"):
         st.session_state.page = 'login_parinte'
         st.rerun()
 
-    if st.button("🛡️ Administrare Sistem"):
+    if st.button("🛡️ ADMINISTRARE UNITATE"):
         st.session_state.page = 'login_administrator'
         st.rerun()
 
-    st.markdown("<div class='spacer'></div>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#30363d;'>v2.0 Build 2026</p>", unsafe_allow_html=True)
+    st.markdown("<div class='glow-line'></div>", unsafe_allow_html=True)
+    
+    # Footer lung pentru a umple ecranul
+    st.markdown("<p style='text-align:center; color:#30363d; font-size:0.8rem;'>Securitate SSL 256-bit activată<br>Suport Tehnic: 0800 123 456<br>Platformă optimizată pentru dispozitive mobile</p>", unsafe_allow_html=True)
 
-# --- PAGINA LOGARE PROFESOR ---
+# --- PAGINA LOGARE (EXTENDED LOGIN) ---
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='titlu-mare'>🔑 Autentificare</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titlu-ultra'>🔑 LOGIN</div>", unsafe_allow_html=True)
+    st.markdown("<div class='glow-line'></div>", unsafe_allow_html=True)
     
-    st.markdown("<div class='spacer'></div>", unsafe_allow_html=True)
+    st.write("")
+    materia = st.selectbox("📚 Selectați Disciplina:", ["Limba și Literatura Română", "Matematică", "Limba Engleză", "Istorie", "Geografie", "Biologie", "Chimie", "Fizică"])
     
-    materia = st.selectbox("📚 Selectați Disciplina:", ["Limba și Literatura Română", "Matematică", "Limba Engleză", "Istorie", "Geografie"])
+    st.write("<br><br>", unsafe_allow_html=True) # Spatiu extra
     
-    st.markdown("<div class='spacer'></div>", unsafe_allow_html=True)
+    parola = st.text_input("🔐 Introduceți Codul Secret:", type="password")
     
-    parola = st.text_input("🔐 Introduceți Parola de Acces:", type="password")
+    st.write("<br><br>", unsafe_allow_html=True)
     
-    st.markdown("<div class='spacer'></div>", unsafe_allow_html=True)
-    
-    if st.button("🚀 CONECTARE ÎN CATALOG"):
+    if st.button("🚀 AUTENTIFICARE SECURIZATĂ"):
         if parola == "123451":
             st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia, "page": "main"})
             st.rerun()
         else:
-            st.error("❌ Parolă incorectă! Vă rugăm să verificați datele.")
+            st.error("❌ EROARE: Parolă incorectă. Vă rugăm să contactați administratorul dacă ați uitat datele.")
             
-    if st.button("⬅️ Înapoi la început"):
+    st.write("<br>", unsafe_allow_html=True)
+    if st.button("⬅️ ÎNAPOI LA MENIU"):
         st.session_state.page = 'home'
-        st.rerun()
-
-# --- PAGINA DUPĂ LOGARE ---
-elif st.session_state.get('logged_in'):
-    st.markdown(f"<div class='titlu-mare'>📖 {st.session_state.materia}</div>", unsafe_allow_html=True)
-    st.success("✅ Conexiune securizată stabilită.")
-    if st.button("🚪 Deconectare Sigură"):
-        st.session_state.clear()
         st.rerun()
