@@ -119,8 +119,8 @@ if st.session_state.page == 'home':
         st.session_state.page = 'login_parinte'
         st.rerun()
 
-    if st.button("🔒  Administrator"):
-        st.session_state.page = 'login_administrator'
+    if st.button("🔒  Director"):
+        st.session_state.page = 'login_Director'
         st.rerun()
         
     st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
@@ -158,3 +158,4 @@ elif st.session_state.get('logged_in'):
     if st.button("Ieșire"):
         st.session_state.clear()
         st.rerun()
+
