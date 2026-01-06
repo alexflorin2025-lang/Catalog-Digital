@@ -6,12 +6,13 @@ from datetime import datetime
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. Design-ul Dark cu Chenar Albastru Vizibil
+# 2. Design Dark Mode cu Chenar Albastru și Input-uri Vizibile
 st.markdown("""
     <style>
     header, footer, #MainMenu {visibility: hidden !important;}
     .stApp { background-color: #050505 !important; }
     
+    /* Chenarul principal */
     .main .block-container {
         background-color: #121212 !important;
         border: 3px solid #58a6ff !important;
@@ -24,6 +25,7 @@ st.markdown("""
     
     .titlu { color: #58a6ff; text-align: center; font-size: 2rem; font-weight: bold; margin-bottom: 20px; }
     
+    /* BUTOANELE MARI */
     .stButton > button {
         width: 100% !important;
         height: 60px !important;
@@ -31,29 +33,45 @@ st.markdown("""
         color: white !important;
         border: 1px solid #333 !important;
         border-radius: 15px !important;
+        font-weight: bold !important;
     }
-    /* Stil pentru inputuri sa fie vizibile in Dark Mode */
-    input { background-color: #0d1117 !important; color: white !important; border: 1px solid #30363d !important; }
+
+    /* REPARARE INPUT PAROLĂ - Să fie foarte vizibil */
+    div[data-baseweb="input"] {
+        background-color: #22272e !important;
+        border: 2px solid #58a6ff !important;
+        border-radius: 10px !important;
+    }
+    
+    input {
+        color: white !important;
+        font-size: 1.1rem !important;
+        padding: 10px !important;
+    }
+
+    /* Etichetele text (Materia, Parola) */
+    label {
+        color: #8b949e !important;
+        font-weight: bold !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Functie Baza de Date (Ca sa nu pierzi notele)
+# 3. Baza de Date
 def init_db():
-    conn = sqlite3.connect('catalog_final.db', check_same_thread=False)
+    conn = sqlite3.connect('catalog_v16.db', check_same_thread=False)
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS grades (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, cl TEXT, name TEXT, sub TEXT, val INT)')
-    c.execute('CREATE TABLE IF NOT EXISTS absences (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, cl TEXT, name TEXT, sub TEXT)')
     conn.commit()
     return conn
 
 conn = init_db()
 CLASE = {"6B": ["Albert", "Alexandru", "Alissa", "Andrei G.", "Andrei C.", "Ayan", "Beatrice", "Bianca", "Bogdan", "David Costea", "Eduard", "Erika", "Giulia", "Ines", "Karina", "Luca", "Mara", "Maria", "Marius", "Mihnea", "Natalia", "Raisa", "Rares Andro", "Rares Volintiru", "Yanis"]}
 
-# 4. Logica de Navigare
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- PAGINA START ---
+# --- ECRAN START ---
 if st.session_state.page == 'home':
     st.markdown("<div class='titlu'>Catalog Digital</div>", unsafe_allow_html=True)
     if st.button("👤 Profesor"):
@@ -66,31 +84,29 @@ if st.session_state.page == 'home':
         st.session_state.page = 'login_admin'
         st.rerun()
 
-# --- PAGINA LOGIN PROFESOR ---
+# --- PAGINA LOGIN PROFESOR (Reparată) ---
 elif st.session_state.page == 'login_prof':
-    st.markdown("<div class='titlu'>Profesor</div>", unsafe_allow_html=True)
-    materia = st.selectbox("Materia", ["Matematică", "Română", "Engleză", "Istorie"])
-    parola = st.text_input("Parolă", type="password")
-    if st.button("LOGARE"):
+    st.markdown("<div class='titlu'>Logare</div>", unsafe_allow_html=True)
+    materia = st.selectbox("Alege Materia:", ["Matematică", "Română", "Engleză", "Istorie"])
+    
+    # Am adăugat spațiu extra aici
+    st.write("")
+    parola = st.text_input("Introdu Parola:", type="password", help="Scrie parola aici")
+    
+    if st.button("CONECTARE"):
         if parola == "123451":
             st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia, "page": "main"})
             st.rerun()
-    if st.button("← Înapoi"): st.session_state.page = 'home'; st.rerun()
+        else:
+            st.error("Parolă incorectă!")
+            
+    if st.button("← Înapoi"): 
+        st.session_state.page = 'home'
+        st.rerun()
 
-# --- INTERFATA CATALOG (Dupa logare) ---
+# --- INTERFATA DUPA LOGARE ---
 elif st.session_state.get('logged_in'):
-    st.markdown(f"<div class='titlu'>{st.session_state.materia}</div>", unsafe_allow_html=True)
-    
-    for elev in CLASE["6B"]:
-        with st.expander(f"👤 {elev}"):
-            nota = st.slider("Notă", 1, 10, 10, key=f"s_{elev}")
-            if st.button(f"Pune Nota {nota}", key=f"b_{elev}"):
-                data_azi = datetime.now().strftime("%d-%m-%Y")
-                conn.execute("INSERT INTO grades (dt, cl, name, sub, val) VALUES (?,?,?,?,?)", 
-                             (data_azi, "6B", elev, st.session_state.materia, nota))
-                conn.commit()
-                st.toast(f"Nota {nota} salvată pentru {elev}!")
-    
+    st.success(f"Logat ca Prof. de {st.session_state.materia}")
     if st.button("🚪 Deconectare"):
         st.session_state.clear()
         st.rerun()
