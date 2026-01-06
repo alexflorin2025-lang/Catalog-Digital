@@ -3,77 +3,84 @@ import sqlite3
 from datetime import datetime
 
 # 1. Configurare Pagina
-st.set_page_config(page_title="Catalog Digital", layout="centered")
+st.set_page_config(page_title="Catalog Digital Școlar", layout="centered")
 
-# 2. CSS DARK PREMIUM - Stil modern cu card vizibil
+# 2. CSS DARK PREMIUM - Interfață lungă și detaliată
 st.markdown("""
     <style>
-    /* Fundalul paginii - Gri extrem de închis, nu negru simplu */
+    /* Fundalul general al aplicației */
     .stApp {
         background-color: #0d1117 !important;
     }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CHENARUL CENTRAL (Cardul) - Stil Glassmorphism */
+    /* CHENARUL CENTRAL (Cardul) - Mai lung și mai spațios */
     .main .block-container {
         background-color: #161b22 !important;
         border: 1px solid #30363d !important;
         border-radius: 20px;
-        padding: 40px !important;
-        margin-top: 50px !important;
-        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
-        max-width: 450px !important;
+        padding: 50px 40px !important; /* Padding mai mare sus/jos */
+        margin-top: 40px !important;
+        box-shadow: 0px 15px 40px rgba(0, 0, 0, 0.6);
+        max-width: 480px !important;
     }
 
-    /* TITLUL - Albastru strălucitor */
-    .titlu-premium {
+    /* TITLUL COMPLET */
+    .titlu-complet {
         text-align: center;
         color: #58a6ff;
-        font-size: 2.2rem;
+        font-size: 2.4rem;
         font-weight: bold;
-        margin-bottom: 30px;
+        margin-bottom: 10px;
+    }
+    
+    .descriere-subtitlu {
+        text-align: center;
+        color: #8b949e;
+        font-size: 1rem;
+        margin-bottom: 40px;
     }
 
-    /* BUTOANELE NEGRE CU TEXT ALB */
+    /* BUTOANELE DE ACCES - Mai înalte și cu text complet */
     .stButton > button {
         width: 100% !important;
-        height: 55px !important;
+        height: 70px !important; /* Înălțime crescută */
         background-color: #21262d !important;
         color: white !important;
         border: 1px solid #30363d !important;
-        border-radius: 10px !important;
-        font-size: 1.1rem !important;
+        border-radius: 12px !important;
+        font-size: 1.2rem !important;
         font-weight: 500 !important;
-        margin-bottom: 12px;
-        transition: 0.2s;
+        margin-bottom: 18px !important;
+        transition: all 0.3s ease;
     }
     
     .stButton > button:hover {
         border-color: #58a6ff !important;
         background-color: #30363d !important;
+        transform: translateY(-2px);
     }
 
-    /* CĂSUȚA DE INPUT (PAROLA) - Gri închis cu text alb */
+    /* INPUT-URILE DE LOGIN */
     input {
         background-color: #0d1117 !important;
         color: white !important;
         border: 1px solid #30363d !important;
-        border-radius: 8px !important;
-        height: 45px !important;
+        border-radius: 10px !important;
+        height: 55px !important;
+        margin-bottom: 20px !important;
     }
     
-    /* Textul de deasupra căsuțelor (Materia, Parola) */
     label { 
-        color: #8b949e !important; 
-        font-size: 0.9rem !important;
-        margin-bottom: 8px !important;
+        color: #c9d1d9 !important; 
+        font-size: 1rem !important;
+        margin-left: 5px !important;
     }
 
-    /* Mesaje de eroare mai discrete */
-    .stAlert {
-        background-color: #2a1215 !important;
-        color: #ff7b72 !important;
-        border: 1px solid #8e1519 !important;
+    /* Separator vizual */
+    .separator {
+        border-bottom: 1px solid #30363d;
+        margin: 20px 0 30px 0;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -82,44 +89,53 @@ st.markdown("""
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- PAGINA DE START ---
+# --- PAGINA DE START (Sign In Lung) ---
 if st.session_state.page == 'home':
-    st.markdown("<div class='titlu-premium'>Catalog Digital</div>", unsafe_allow_html=True)
+    st.markdown("<div class='titlu-complet'>Catalog Digital</div>", unsafe_allow_html=True)
+    st.markdown("<div class='descriere-subtitlu'>Sistem oficial de gestionare a situației școlare</div>", unsafe_allow_html=True)
     
-    if st.button("👤 Profesor"):
-        st.session_state.page = 'login_prof'
-        st.rerun()
-    if st.button("👨‍👩‍👧 Părinte / Elev"):
-        st.session_state.page = 'login_par'
-        st.rerun()
-    if st.button("⚙️ Administrator"):
-        st.session_state.page = 'login_admin'
+    st.markdown("<div class='separator'></div>", unsafe_allow_html=True)
+    
+    # Butoane cu denumiri complete
+    if st.button("Accesează Modul Profesor"):
+        st.session_state.page = 'login_profesor'
         st.rerun()
 
-# --- PAGINA LOGIN PROFESOR ---
-elif st.session_state.page == 'login_prof':
-    st.markdown("<div class='titlu-premium'>Logare Prof</div>", unsafe_allow_html=True)
+    if st.button("Vizualizare Părinte sau Elev"):
+        st.session_state.page = 'login_parinte'
+        st.rerun()
+
+    if st.button("Panou Control Administrator"):
+        st.session_state.page = 'login_administrator'
+        st.rerun()
+
+# --- PAGINA LOGARE PROFESOR ---
+elif st.session_state.page == 'login_profesor':
+    st.markdown("<div class='titlu-complet'>Autentificare</div>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#8b949e;'>Introduceți datele pentru a accesa materia</p>", unsafe_allow_html=True)
     
-    materia = st.selectbox("Materia", ["Limba Română", "Matematică", "Engleză", "Istorie"])
-    st.write("") # Spatiu mic
-    parola = st.text_input("Introdu Parola", type="password")
+    st.write("")
+    materia = st.selectbox("Selectați Disciplina Școlară:", ["Limba și Literatura Română", "Matematică", "Limba Engleză", "Istorie", "Geografie"])
     
-    st.write("") # Spatiu sub parola
-    if st.button("CONECTARE"):
+    st.write("")
+    parola = st.text_input("Introduceți Parola de Acces:", type="password")
+    
+    st.write("")
+    if st.button("CONECTARE ÎN SISTEM"):
         if parola == "123451":
             st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia, "page": "main"})
             st.rerun()
         else:
-            st.error("Parolă incorectă!")
+            st.error("Parola introdusă este incorectă. Vă rugăm să reîncercați.")
             
-    if st.button("← Înapoi"):
+    if st.button("Înapoi la meniul principal"):
         st.session_state.page = 'home'
         st.rerun()
 
-# --- PAGINA PRINCIPALĂ (DUMMY) ---
+# --- PAGINA DUPĂ LOGARE ---
 elif st.session_state.get('logged_in'):
-    st.markdown(f"<div class='titlu-premium'>{st.session_state.materia}</div>", unsafe_allow_html=True)
-    st.info("Sistemul de notare este activ.")
-    if st.button("🚪 Ieșire"):
+    st.markdown(f"<div class='titlu-complet'>{st.session_state.materia}</div>", unsafe_allow_html=True)
+    st.info("Sunteți conectat cu succes la baza de date școlară.")
+    if st.button("Deconectare Securizată"):
         st.session_state.clear()
         st.rerun()
