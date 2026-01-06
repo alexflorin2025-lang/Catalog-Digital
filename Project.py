@@ -3,14 +3,16 @@ import streamlit as st
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS pentru Centrare Absoluta si Chenar Stil Premium
+# 2. CSS pentru replicarea stilului NoulCatalog.ro
 st.markdown("""
     <style>
-    /* Fundal negru pur */
-    .stApp { background-color: #000000 !important; }
+    /* Fundal general negru sau imagine (aici am lasat negru pentru claritate) */
+    .stApp { 
+        background-color: #000000 !important; 
+    }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* ALINIRE LA MIJLOCUL ECRANULUI (Vertical si Orizontal) */
+    /* CENTRARE ABSOLUTĂ A CARDULUI */
     .stApp > section > div {
         display: flex !important;
         align-items: center !important;
@@ -18,52 +20,65 @@ st.markdown("""
         min-height: 100vh !important;
     }
 
-    /* CHENARUL (CARDUL) CENTRAL */
+    /* CHENARUL (CARDUL) ALB - Ca in poza */
     .main .block-container {
-        background-color: #ffffff !important; /* Fundal alb ca in poza NoulCatalog */
-        border-radius: 15px !important;
-        padding: 40px !important;
-        max-width: 400px !important;
-        box-shadow: 0px 10px 30px rgba(255, 255, 255, 0.1) !important;
+        background-color: #ffffff !important;
+        border-radius: 12px !important;
+        padding: 40px 30px !important;
+        max-width: 420px !important;
+        box-shadow: 0px 15px 35px rgba(0, 0, 0, 0.4) !important;
         text-align: center;
     }
 
-    /* TITLU (Numele site-ului in chenar) */
-    .titlu-chenar {
-        color: #0056b3; /* Albastru profesional */
-        font-size: 1.8rem;
-        font-weight: bold;
-        margin-bottom: 10px;
+    /* TEXTUL DE LOGO (NoulCatalog.ro style) */
+    .logo-text {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin-bottom: 5px;
     }
-    
-    .subtitlu-chenar {
+    .logo-blue { color: #007bff; }
+    .logo-orange { color: #ff9900; }
+    .logo-green { color: #28a745; }
+
+    .instructiuni {
         color: #666;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         margin-bottom: 30px;
     }
 
-    /* BUTOANELE DIN INTERIORUL CHENARULUI */
+    /* BUTOANELE DREPTUNGHIULARE CURATE --------->> */
     div.stButton > button {
         width: 100% !important;
-        height: 55px !important;
-        background-color: #f8f9fa !important; /* Gri foarte deschis */
+        height: 50px !important;
+        background-color: #f8f9fa !important;
         color: #333 !important;
-        border: 1px solid #dee2e6 !important;
-        border-radius: 8px !important;
-        font-size: 1.1rem !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 6px !important;
+        font-size: 1rem !important;
         font-weight: 500 !important;
-        margin-bottom: 10px !important;
-        transition: 0.2s;
+        margin-bottom: 8px !important;
+        transition: all 0.2s;
     }
     
     div.stButton > button:hover {
-        background-color: #e2e6ea !important;
+        background-color: #e9ecef !important;
         border-color: #adb5bd !important;
         color: #000 !important;
     }
 
-    /* Ascundere scrollbar inutil */
-    body { overflow: hidden; }
+    /* Stil pentru campurile de login */
+    input {
+        border-radius: 6px !important;
+        border: 1px solid #ced4da !important;
+    }
+    
+    label { 
+        text-align: left !important;
+        width: 100%;
+        display: block;
+        font-weight: 600;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -71,13 +86,17 @@ st.markdown("""
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# --- PAGINA START (CENTRATA IN CHENAR ALB) ---
+# --- ECRAN START (CARD ALB CENTRAT) ---
 if st.session_state.page == 'home':
-    # Titlu interior
-    st.markdown("<div class='titlu-chenar'>Catalog Digital</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitlu-chenar'>alege cum vrei să te autentifici:</div>", unsafe_allow_html=True)
+    # Titlu stilizat
+    st.markdown("""
+        <div class='logo-text'>
+            <span class='logo-blue'>Noul</span><span class='logo-orange'>Catalog</span><span class='logo-green'>.ro</span>
+        </div>
+        <div class='instructiuni'>alege cum vrei să te autentifici:</div>
+    """, unsafe_allow_html=True)
     
-    # Butoanele centrate
+    # Butoanele
     if st.button("Profesor"):
         st.session_state.page = 'login_profesor'
         st.rerun()
@@ -86,21 +105,27 @@ if st.session_state.page == 'home':
         st.session_state.page = 'login_parinte'
         st.rerun()
 
-    # Redenumit in Directoare
     if st.button("Directoare"):
         st.session_state.page = 'login_directoare'
         st.rerun()
 
 # --- LOGIN PROFESOR ---
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='titlu-chenar'>Autentificare</div>", unsafe_allow_html=True)
+    st.markdown("<div class='logo-text'><span class='logo-blue'>Logare</span> Prof</div>", unsafe_allow_html=True)
     
-    materia = st.selectbox("Materia", ["Limba Română", "Matematică", "Fizică"])
-    parola = st.text_input("Parolă", type="password")
+    st.write("")
+    materia = st.selectbox("Materia", ["Limba Română", "Matematică", "Engleză"])
+    parola = st.text_input("Introdu Parola", type="password")
     
-    if st.button("Conectare"):
-        st.success("Acces permis")
-        
+    st.write("<br>", unsafe_allow_html=True)
+    
+    if st.button("CONECTARE"):
+        if parola == "123451":
+            st.session_state.logged_in = True
+            st.rerun()
+        else:
+            st.error("Eroare de autentificare")
+            
     if st.button("← Înapoi"):
         st.session_state.page = 'home'
         st.rerun()
