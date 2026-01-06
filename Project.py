@@ -1,131 +1,123 @@
 import streamlit as st
+import sqlite3
+import pandas as pd
+from datetime import datetime
 
-# 1. Configurare Pagina - Centrat pentru a sta în mijloc
-st.set_page_config(page_title="Catalog Digital", layout="centered")
+# 1. Configurare Pagina (Trebuie sa fie prima comanda Streamlit)
+st.set_page_config(page_title="Catalog Digital", page_icon="🎓", layout="centered")
 
-# 2. CSS PREMIUM - Chenar Central (Card)
+# 2. Stil Vizual (CSS) - Corectat pentru a evita erori
 st.markdown("""
     <style>
-    /* Fundalul general (în afara chenarului) - Negru pur */
-    .stApp { background-color: #000000 !important; }
-    header, footer, #MainMenu {visibility: hidden !important;}
-
-    /* CHENARUL CENTRAL (Cutia) */
-    .main .block-container {
-        background-color: #0d1117 !important; /* Gri foarte închis */
-        border: 2px solid #1f6feb !important; /* Bordură Albastră Elegantă */
-        border-radius: 25px !important; /* Colțuri rotunjite */
-        padding: 50px 30px !important;
-        margin-top: 40px !important;
-        max-width: 480px !important; /* Lățime fixă ca să arate bine centrat */
-        box-shadow: 0px 0px 30px rgba(31, 111, 235, 0.15) !important; /* Umbră fină albastră */
+    .main { background-color: #0f1115; }
+    .stButton>button { 
+        width: 100%; 
+        border-radius: 10px; 
+        height: 3em; 
+        background-color: #3b82f6; 
+        color: white; 
+        font-weight: bold;
     }
-
-    /* TITLUL */
-    .titlu-principal {
-        text-align: center;
-        color: #ffffff;
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-bottom: 10px;
+    .stExpander { 
+        border: 1px solid #27272a; 
+        border_radius: 15px; 
+        background-color: #1a1d23; 
     }
-    
-    .subtitlu {
-        text-align: center;
-        color: #8b949e;
-        font-size: 0.9rem;
-        margin-bottom: 40px;
-    }
-
-    /* BUTOANELE - Centrate și late în interiorul chenarului */
-    div.stButton > button {
-        width: 100% !important;
-        height: 65px !important;
-        background-color: #161b22 !important;
-        color: white !important;
-        border: 1px solid #30363d !important;
-        border-radius: 12px !important;
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        margin-bottom: 15px !important;
-        transition: 0.3s;
-    }
-    
-    div.stButton > button:hover {
-        border-color: #1f6feb !important; /* Se face albastru la atingere */
-        color: #58a6ff !important;
-        background-color: #1f242c !important;
-    }
-
-    /* INPUT-URI (pentru login) */
-    input, .stSelectbox > div > div {
-        background-color: #0d1117 !important;
-        color: white !important;
-        border: 1px solid #30363d !important;
-    }
-    
-    label { color: #8b949e !important; }
-    
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logica Aplicatiei
-if 'page' not in st.session_state:
-    st.session_state.page = 'home'
+# 3. Initializare Baza de Date
+def init_db():
+    conn = sqlite3.connect('attendance_web.db', check_same_thread=False)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS grades 
+                 (dt TEXT, cl TEXT, name TEXT, sub TEXT, val INT)''')
+    c.execute('''CREATE TABLE IF NOT EXISTS absences 
+                 (dt TEXT, cl TEXT, name TEXT)''')
+    conn.commit()
+    return conn
 
-# --- ECRAN START ---
-if st.session_state.page == 'home':
-    # Titlul
-    st.markdown("<div class='titlu-principal'>Catalog Digital</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitlu'>Alegeți tipul de acces:</div>", unsafe_allow_html=True)
-    
-    # Butoanele în chenar
-    if st.button("👨‍🏫  Profesor"):
-        st.session_state.page = 'login_profesor'
-        st.rerun()
+conn = init_db()
 
-    if st.button("👨‍👩‍👧  Părinte / Elev"):
-        st.session_state.page = 'login_parinte'
-        st.rerun()
+# 4. Date Elevi
+CLASE = {
+    "6B": ["Albert", "Alexandru", "Alissa", "Andrei G.", "Andrei C.", "Ayan", "Beatrice", "Bianca", "Bogdan", "David Costea", "Eduard", "Erika", "Giulia", "Ines", "Karina", "Luca", "Mara", "Maria", "Marius", "Mihnea", "Natalia", "Raisa", "Rares Andro", "Rares Volintiru", "Yanis"],
+    "7A": ["Ionescu Maria", "Popescu Dan"]
+}
 
-    # Aici am modificat: DIRECTOR în loc de Administrator
-    if st.button("👔  Director"):
-        st.session_state.page = 'login_director'
-        st.rerun()
+# 5. Logica de Autentificare
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 
-# --- LOGIN PROFESOR ---
-elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='titlu-principal'>Acces Profesor</div>", unsafe_allow_html=True)
-    st.write("")
+if not st.session_state.logged_in:
+    st.title("🎓 Catalog Digital")
+    st.subheader("Autentificare Sistem")
     
-    materia = st.selectbox("Disciplina:", ["Matematică", "Română", "Engleză", "Istorie"])
-    st.write("")
-    parola = st.text_input("Parola:", type="password")
+    tab1, tab2 = st.tabs(["Profesor", "Părinte"])
     
-    st.write("<br>", unsafe_allow_html=True)
-    
-    if st.button("Autentificare"):
-        if parola == "123451":
-            st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia})
+    with tab1:
+        materia = st.selectbox("Materia", ["Informatică", "Matematică", "Română", "Engleză"])
+        parola = st.text_input("Parolă Acces", type="password", key="p_prof")
+        
+        if st.button("CONECTARE PROFESOR"):
+            if parola == "123451":
+                st.session_state.logged_in = True
+                st.session_state.role = "teacher"
+                st.session_state.materia = materia
+                st.rerun()
+            else:
+                st.error("Parolă incorectă!")
+                
+    with tab2:
+        st.info("Accesul părinților se face pe baza numelui elevului.")
+        nume_elev = st.text_input("Nume complet elev")
+        if st.button("CONECTARE PĂRINTE"):
+            st.session_state.logged_in = True
+            st.session_state.role = "parent"
+            st.session_state.nume_elev = nume_elev
             st.rerun()
-        else:
-            st.error("Parolă greșită!")
-            
-    if st.button("← Înapoi"):
-        st.session_state.page = 'home'
+
+else:
+    # 6. Dashboard Principal
+    st.sidebar.title("Meniu Catalog")
+    st.sidebar.write(f"Utilizator: **{st.session_state.role.capitalize()}**")
+    
+    if st.sidebar.button("DECONECTARE"):
+        st.session_state.logged_in = False
         st.rerun()
 
-# --- LOGIN DIRECTOR (Nou) ---
-elif st.session_state.page == 'login_director':
-    st.markdown("<div class='titlu-principal'>Acces Director</div>", unsafe_allow_html=True)
-    st.write("")
-    
-    parola = st.text_input("Parolă Director:", type="password")
-    
-    st.write("<br>", unsafe_allow_html=True)
-    if st.button("Logare Director"):
-        st.success("Bine ați venit, Domnule Director!")
-    
-    if st.button("← Înapoi"):
-        st.session_state.page = 'home'
-        st.rerun()
+    if st.session_state.role == "teacher":
+        st.title(f"📚 Materia: {st.session_state.materia}")
+        clasa_sel = st.selectbox("Selectează Clasa", list(CLASE.keys()))
+        search = st.text_input("🔍 Caută elev...")
+
+        elevi_filtrati = [e for e in CLASE[clasa_sel] if search.lower() in e.lower()]
+
+        for elev in elevi_filtrati:
+            with st.expander(f"👤 {elev}"):
+                col1, col2 = st.columns(2)
+                with col1:
+                    nota = st.number_input(f"Nota", 1, 10, 10, key=f"n_{elev}")
+                    if st.button(f"Salvează Nota", key=f"btn_n_{elev}"):
+                        dt = datetime.now().strftime("%d-%m-%Y")
+                        conn.execute("INSERT INTO grades VALUES (?,?,?,?,?)", 
+                                     (dt, clasa_sel, elev, st.session_state.materia, nota))
+                        conn.commit()
+                        st.success(f"Nota {nota} adăugată!")
+                with col2:
+                    if st.button(f"Marchează Absent", key=f"abs_{elev}"):
+                        dt = datetime.now().strftime("%d-%m-%Y")
+                        conn.execute("INSERT INTO absences VALUES (?,?,?)", (dt, clasa_sel, elev))
+                        conn.commit()
+                        st.warning("Absență înregistrată!")
+                        
+        st.divider()
+        st.subheader("📋 Ultimile note adăugate")
+        query = "SELECT dt as Data, name as Elev, sub as Materia, val as Nota FROM grades ORDER BY rowid DESC LIMIT 5"
+        df = pd.read_sql_query(query, conn)
+        st.dataframe(df, use_container_width=True)
+
+    else:
+        st.title(f"👋 Salut, {st.session_state.nume_elev}")
+        st.write("Iată situația ta școlară:")
+        # Aici se pot adauga detalii specifice pentru parinti
