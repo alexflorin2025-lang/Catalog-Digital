@@ -3,98 +3,96 @@ import streamlit as st
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="wide")
 
-# 2. CSS FORȚAT pentru Centrare, Fundal și Gradient Oglindă
+# 2. CSS Optimizat pentru a elimina Scroll-ul
 st.markdown("""
     <style>
-    /* 1. FUNDALUL ÎNTREGII PAGINI CU IMAGINEA DE CLASĂ */
+    /* 1. FUNDAL ȘI ELIMINARE SCROLL */
     .stApp {
-        background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), 
+        background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
                     url("https://images.unsplash.com/photo-1546410531-bb4ffa13a774?q=80&w=2940&auto=format&fit=crop") !important;
         background-size: cover !important;
         background-position: center !important;
-        background-attachment: fixed !important;
+        height: 100vh !important;
+        overflow: hidden !important; /* ELIMINĂ SCROLL-UL */
     }
 
-    /* 2. FORȚĂM TOTUL SĂ STEA LA MIJLOCUL ECRANULUI (ORIZONTAL ȘI VERTICAL) */
+    /* 2. CENTRARE VERTICALĂ ȘI ORIZONTALĂ */
     .main {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        min-height: 100vh !important;
+        height: 100vh !important;
     }
 
-    /* 3. CHENARUL CENTRAL (CARDUL) */
-    /* Folosim un selector extrem de specific pentru a suprascrie Streamlit */
+    /* 3. CARDUL CU GRADIENT OGLINDĂ (COMPACT) */
     [data-testid="stVerticalBlock"] > div:has(div.stButton) {
         background: linear-gradient(
             to bottom, 
-            rgba(60, 80, 110, 0.5) 0%,     /* Mai deschis sus */
-            rgba(5, 15, 30, 0.95) 50%,     /* Albastru Dark la MIJLOC */
-            rgba(60, 80, 110, 0.5) 100%    /* Mai deschis jos */
+            rgba(50, 70, 100, 0.4) 0%,     /* Sus - mai deschis */
+            rgba(5, 15, 35, 0.98) 50%,     /* MIJLOC - Albastru Dark */
+            rgba(50, 70, 100, 0.4) 100%    /* Jos - mai deschis */
         ) !important;
-        backdrop-filter: blur(20px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 30px !important;
-        padding: 60px 40px !important;
-        width: 450px !important;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 25px !important;
+        padding: 35px 40px !important; /* Padding redus pentru compactare */
+        width: 420px !important;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9) !important;
         margin: auto !important;
     }
 
-    /* 4. TITLU "CATALOG DIGITAL" */
+    /* 4. TITLU MAI MIC */
     .catalog-title {
         color: white;
         font-family: 'Inter', sans-serif;
-        font-size: 2.8rem;
+        font-size: 2.2rem; /* Redus de la 2.8 */
         font-weight: 900;
         text-align: center;
-        margin-bottom: 5px;
+        margin-bottom: 0px;
         text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
     }
     
     .catalog-sub {
-        color: #adb5bd;
+        color: #8892b0;
         text-align: center;
-        font-size: 1rem;
-        margin-bottom: 40px;
+        font-size: 0.9rem;
+        margin-bottom: 25px;
     }
 
-    /* 5. BUTOANELE NEGRE (DOREAI DARK) */
+    /* 5. BUTOANE NEGRE COMPACTE */
     div.stButton > button {
         width: 100% !important;
-        background-color: #000000 !important; /* Negru pur */
+        background-color: #000000 !important;
         color: #ffffff !important;
-        height: 55px !important;
-        border-radius: 12px !important;
-        border: 1px solid #2d3748 !important;
+        height: 50px !important; /* Înălțime redusă */
+        border-radius: 10px !important;
+        border: 1px solid #1a202c !important;
         font-weight: 700 !important;
-        font-size: 1.1rem !important;
-        margin-bottom: 15px !important;
+        font-size: 1rem !important;
+        margin-bottom: 10px !important;
         transition: 0.3s !important;
     }
     
     div.stButton > button:hover {
         border-color: #ffffff !important;
-        background-color: #111111 !important;
-        transform: translateY(-2px) !important;
+        transform: scale(1.02) !important;
     }
 
-    /* Ascundere elemente Streamlit */
+    /* Ascundere UI Streamlit */
     header, footer, #MainMenu {visibility: hidden !important;}
+    [data-testid="stHeader"] {display: none;}
     </style>
     """, unsafe_allow_html=True)
 
-# 3. LOGICA APLICAȚIEI
+# 3. LOGICA
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# Folosim un container central pentru a ajuta centrarea
 with st.container():
     if st.session_state.page == 'home':
         st.markdown("<h1 class='catalog-title'>Catalog Digital</h1>", unsafe_allow_html=True)
-        st.markdown("<p class='catalog-sub'>Portal de Management Educațional</p>", unsafe_allow_html=True)
+        st.markdown("<p class='catalog-sub'>Management Educațional</p>", unsafe_allow_html=True)
         
-        # Butoanele negre
         if st.button("PROFESOR"):
             st.session_state.page = 'login_profesor'
             st.rerun()
@@ -108,10 +106,12 @@ with st.container():
             st.rerun()
 
     elif st.session_state.page == 'login_profesor':
-        st.markdown("<h1 class='catalog-title'>Autentificare</h1>", unsafe_allow_html=True)
-        parola = st.text_input("Parolă", type="password", key="pwd_p_v39")
+        st.markdown("<h1 class='catalog-title'>Logare</h1>", unsafe_allow_html=True)
+        st.write("")
+        user = st.text_input("Utilizator", key="u_v40")
+        parola = st.text_input("Parolă", type="password", key="p_v40")
         if st.button("CONECTARE"):
-            st.success("OK")
+            st.success("Acces permis")
         if st.button("← ÎNAPOI"):
             st.session_state.page = 'home'
             st.rerun()
