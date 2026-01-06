@@ -14,18 +14,18 @@ st.markdown("""
     div.stButton > button { border-radius: 8px; height: 45px; font-weight: bold; background-color: #21262d; color: #58a6ff; border: 1px solid #30363d; }
     .absent-btn button { background-color: #da3633 !important; color: white !important; }
     .warning-btn button { background-color: #f1e05a !important; color: black !important; }
-    .director-btn button { background-color: #8957e5 !important; color: white !important; }
+    .motiveaza-btn button { background-color: #238636 !important; color: white !important; height: 35px !important; font-size: 14px !important; }
     </style>
     """, unsafe_allow_html=True)
 
 # 3. Baza de Date
 def init_db():
-    conn = sqlite3.connect('catalog_final.db', check_same_thread=False)
+    conn = sqlite3.connect('catalog_v4.db', check_same_thread=False)
     c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS grades (dt TEXT, cl TEXT, name TEXT, sub TEXT, val INT)')
-    c.execute('CREATE TABLE IF NOT EXISTS absences (dt TEXT, cl TEXT, name TEXT, sub TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS warnings (dt TEXT, name TEXT, reason TEXT)')
-    c.execute('CREATE TABLE IF NOT EXISTS conduct (name TEXT, score INT DEFAULT 10)')
+    c.execute('CREATE TABLE IF NOT EXISTS grades (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, cl TEXT, name TEXT, sub TEXT, val INT)')
+    c.execute('CREATE TABLE IF NOT EXISTS absences (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, cl TEXT, name TEXT, sub TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS warnings (id INTEGER PRIMARY KEY AUTOINCREMENT, dt TEXT, name TEXT, reason TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS conduct (name TEXT PRIMARY KEY, score INT DEFAULT 10)')
     conn.commit()
     return conn
 
@@ -38,7 +38,7 @@ CLASE = {
     "7A": ["Ionescu Maria", "Popescu Dan"]
 }
 
-# Funcție pentru verificare purtare (3 observații = -1 punct)
+# Functie automata pentru nota la purtare
 def update_conduct_auto(nume):
     c = conn.cursor()
     c.execute("SELECT COUNT(*) FROM warnings WHERE name = ?", (nume,))
@@ -53,7 +53,7 @@ def update_conduct_auto(nume):
         return True
     return False
 
-# 5. Logica Autentificare
+# 5. Autentificare
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 
@@ -68,14 +68,12 @@ if not st.session_state.logged_in:
             if p_p == "123451":
                 st.session_state.update({"logged_in": True, "role": "teacher", "materia": m_sel})
                 st.rerun()
-    
     with t2:
         p_dir = st.text_input("Parolă Director", type="password", key="p_dir")
         if st.button("CONECTARE DIRECTOR"):
             if p_dir == "admin123":
                 st.session_state.update({"logged_in": True, "role": "director"})
                 st.rerun()
-                
     with t3:
         c_p = st.selectbox("Clasa", list(CLASE.keys()))
         n_p = st.selectbox("Nume Elev", CLASE[c_p])
@@ -86,70 +84,99 @@ if not st.session_state.logged_in:
                 st.rerun()
 
 else:
-    # 6. Interfață PROFESOR
+    # 6. LOGICA PENTRU AFISARE SITUATIE SI MOTIVARE (Folosita de Prof si Director)
+    def show_student_details(e, is_director=False):
+        c_score = pd.read_sql_query(f"SELECT score FROM conduct WHERE name = '{e}'", conn)
+        score = c_score['score'].iloc[0] if not c_score.empty else 10
+        
+        st.write(f"**Nota Purtare:** {score}")
+        
+        # Tabel Note
+        note_e = pd.read_sql_query(f"SELECT sub as Materia, val as Nota, dt as Data FROM grades WHERE name='{e}'", conn)
+        if not note_e.empty:
+            st.write("Note:")
+            st.dataframe(note_e, use_container_width=True, hide_index=True)
+        
+        # Lista Absente cu buton Motivare
+        st.write("**Absențe:**")
+        abs_e = pd.read_sql_query(f"SELECT id, dt, sub FROM absences WHERE name='{e}'", conn)
+        if not abs_e.empty:
+            for _, row in abs_e.iterrows():
+                col_a, col_b = st.columns([2, 1])
+                col_a.write(f"📅 {row['dt']} ({row['sub']})")
+                st.markdown("<div class='motiveaza-btn'>", unsafe_allow_html=True)
+                if col_b.button("Motivează", key=f"mot_{e}_{row['id']}"):
+                    conn.execute("DELETE FROM absences WHERE id = ?", (row['id'],))
+                    conn.commit()
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.info("Nicio absență.")
+
+    # 7. Interfață PROFESOR
     if st.session_state.role == "teacher":
         st.title(f"📚 {st.session_state.materia}")
         cl_sel = st.selectbox("Clasa", list(CLASE.keys()))
         for e in CLASE[cl_sel]:
             with st.expander(f"👤 {e}"):
                 d_sel = st.date_input("Data", datetime.now(), key=f"d_{e}").strftime("%d-%m-%Y")
+                
+                # Grila Note
                 cols = st.columns(5)
                 for i in range(1, 11):
                     with cols[(i-1)%5]:
                         if st.button(str(i), key=f"n{i}_{e}"):
-                            conn.execute("INSERT INTO grades VALUES (?,?,?,?,?)", (d_sel, cl_sel, e, st.session_state.materia, i))
+                            conn.execute("INSERT INTO grades (dt, cl, name, sub, val) VALUES (?,?,?,?,?)", (d_sel, cl_sel, e, st.session_state.materia, i))
                             conn.commit()
-                            st.toast(f"Nota {i} salvată!")
-                
-                c1, c2 = st.columns(2)
+                            st.toast(f"Salvat!")
+
+                c1, c2, c3 = st.columns(3)
                 with c1:
                     st.markdown("<div class='absent-btn'>", unsafe_allow_html=True)
                     if st.button(f"🔴 ABSENT", key=f"ab_{e}", use_container_width=True):
-                        conn.execute("INSERT INTO absences VALUES (?,?,?,?)", (d_sel, cl_sel, e, st.session_state.materia))
+                        conn.execute("INSERT INTO absences (dt, cl, name, sub) VALUES (?,?,?,?)", (d_sel, cl_sel, e, st.session_state.materia))
                         conn.commit()
                     st.markdown("</div>", unsafe_allow_html=True)
                 with c2:
                     st.markdown("<div class='warning-btn'>", unsafe_allow_html=True)
-                    if st.button(f"⚠️ OBSERVAȚIE", key=f"warn_{e}", use_container_width=True):
-                        conn.execute("INSERT INTO warnings VALUES (?,?,?)", (d_sel, e, "Comportament neadecvat"))
+                    if st.button(f"⚠️ OBS.", key=f"warn_{e}", use_container_width=True):
+                        conn.execute("INSERT INTO warnings (dt, name, reason) VALUES (?,?,?)", (d_sel, e, "Comportament"))
                         conn.commit()
-                        if update_conduct_auto(e):
-                            st.error("Scădere automată a notei la purtare (3 observații)!")
-                        else:
-                            st.warning("Observație adăugată!")
+                        update_conduct_auto(e)
                     st.markdown("</div>", unsafe_allow_html=True)
+                with c3:
+                    if st.button("🗑️ Nota", key=f"del_{e}", use_container_width=True):
+                        conn.execute("DELETE FROM grades WHERE id = (SELECT MAX(id) FROM grades WHERE name = ?)", (e,))
+                        conn.commit()
+                        st.rerun()
+                
+                st.divider()
+                show_student_details(e) # Profesorul vede tot și poate motiva
 
-    # 7. Interfață DIRECTOR
+    # 8. Interfață DIRECTOR
     elif st.session_state.role == "director":
         st.title("👑 Panou Director")
-        cl_dir = st.selectbox("Alege Clasa", list(CLASE.keys()))
+        cl_dir = st.selectbox("Clasa", list(CLASE.keys()))
         for e in CLASE[cl_dir]:
-            c_score = pd.read_sql_query(f"SELECT score FROM conduct WHERE name = '{e}'", conn)
-            score = c_score['score'].iloc[0] if not c_score.empty else 10
-            
-            with st.expander(f"Elev: {e} | Notă Purtare: {score}"):
-                st.markdown("<div class='director-btn'>", unsafe_allow_html=True)
-                if st.button(f"📉 SCADE PURTAREA LUI {e}", key=f"dec_{e}", use_container_width=True):
-                    new_s = max(1, score - 1)
-                    conn.execute("INSERT OR REPLACE INTO conduct (name, score) VALUES (?, ?)", (e, new_s))
+            with st.expander(f"👤 {e}"):
+                show_student_details(e, is_director=True)
+                if st.button(f"📉 SCADE PURTAREA (-1p)", key=f"dec_{e}", use_container_width=True):
+                    c_score = pd.read_sql_query(f"SELECT score FROM conduct WHERE name = '{e}'", conn)
+                    score = c_score['score'].iloc[0] if not c_score.empty else 10
+                    conn.execute("INSERT OR REPLACE INTO conduct (name, score) VALUES (?, ?)", (e, max(1, score - 1)))
                     conn.commit()
                     st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
 
-    # 8. Interfață PĂRINTE
+    # 9. Interfață PĂRINTE
     else:
         st.title(f"📱 Elev: {st.session_state.nume_elev}")
         c_score = pd.read_sql_query(f"SELECT score FROM conduct WHERE name = '{st.session_state.nume_elev}'", conn)
         score = c_score['score'].iloc[0] if not c_score.empty else 10
         st.metric("Nota la Purtare", score)
-        
-        tab1, tab2, tab3 = st.tabs(["📊 Note", "📍 Absențe", "⚠️ Observații"])
-        with tab1:
-            st.table(pd.read_sql_query(f"SELECT dt, sub, val FROM grades WHERE name='{st.session_state.nume_elev}'", conn))
-        with tab2:
-            st.table(pd.read_sql_query(f"SELECT dt, sub FROM absences WHERE name='{st.session_state.nume_elev}'", conn))
-        with tab3:
-            st.table(pd.read_sql_query(f"SELECT dt, reason FROM warnings WHERE name='{st.session_state.nume_elev}'", conn))
+        t1, t2, t3 = st.tabs(["📊 Note", "📍 Absențe", "⚠️ Observații"])
+        with t1: st.table(pd.read_sql_query(f"SELECT dt, sub, val FROM grades WHERE name='{st.session_state.nume_elev}'", conn))
+        with t2: st.table(pd.read_sql_query(f"SELECT dt, sub FROM absences WHERE name='{st.session_state.nume_elev}'", conn))
+        with t3: st.table(pd.read_sql_query(f"SELECT dt, reason FROM warnings WHERE name='{st.session_state.nume_elev}'", conn))
 
     if st.sidebar.button("🚪 DECONECTARE"):
         st.session_state.logged_in = False
