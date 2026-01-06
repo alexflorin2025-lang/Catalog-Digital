@@ -3,12 +3,12 @@ import streamlit as st
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS - Ultra Dark cu Gradient Vertical în Card
+# 2. CSS - Mirror Gradient & Ultra Dark Buttons
 st.markdown("""
     <style>
-    /* Fundalul general ramane neschimbat */
+    /* Fundal general cinematic cu imaginea de clasa */
     .stApp {
-        background: linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)), 
+        background: linear-gradient(rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.88)), 
                     url("https://images.unsplash.com/photo-1546410531-bb4ffa13a774?q=80&w=2940&auto=format&fit=crop");
         background-size: cover;
         background-position: center;
@@ -17,68 +17,73 @@ st.markdown("""
 
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CHENARUL CENTRAL - Acum are Gradient Vertical */
+    /* CHENARUL CENTRAL - GRADIENT OGLINDĂ (Deschis -> Albastru Dark -> Deschis) */
     .main .block-container {
-        /* Gradient de la un gri-albastru foarte inchis (jos) la unul mai deschis (sus) */
-        background: linear-gradient(to top, rgba(5, 5, 5, 0.9), rgba(25, 35, 50, 0.7)) !important;
+        /* Sus: Gri-albastru deschis | Mijloc: Albastru foarte inchis | Jos: Gri-albastru deschis */
+        background: linear-gradient(
+            to bottom, 
+            rgba(40, 55, 75, 0.6) 0%, 
+            rgba(5, 12, 25, 0.95) 50%, 
+            rgba(40, 55, 75, 0.6) 100%
+        ) !important;
         
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 30px !important;
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 35px !important;
         padding: 60px 50px !important;
         max-width: 500px !important;
-        box-shadow: 0 40px 100px rgba(0, 0, 0, 0.9) !important;
+        box-shadow: 0 50px 120px rgba(0, 0, 0, 1) !important;
         margin-top: 5vh;
+        text-align: center;
     }
 
-    /* Titlu */
+    /* Titlu Premium cu Glow */
     .logo-text {
         font-family: 'Inter', sans-serif;
         font-size: 3rem;
         font-weight: 900;
         color: #ffffff;
-        text-align: center;
         margin-bottom: 5px;
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     }
 
     .subtitle {
-        color: #8b949e;
+        color: #94a3b8;
         font-size: 1.1rem;
-        text-align: center;
         margin-bottom: 40px;
     }
 
-    /* BUTOANE NEGRE MODERNE */
+    /* BUTOANELE TALE NEGRE (DARK) */
     div.stButton > button {
         width: 100% !important;
         height: 60px !important;
-        background: #050505 !important;
+        background: #000000 !important; /* Negru pur */
         color: #ffffff !important;
-        border: 1px solid #1b263b !important;
-        border-radius: 15px !important;
+        border: 1px solid #1e293b !important;
+        border-radius: 16px !important;
         font-size: 1.1rem !important;
         font-weight: 700 !important;
         margin-top: 15px;
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     div.stButton > button:hover {
-        background: #111111 !important;
-        border-color: #ffffff !important;
-        transform: translateY(-2px);
+        background: #0a0a0a !important;
+        border-color: #ffffff !important; /* Glow la atingere */
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
     }
 
-    /* Input-uri Ultra Dark */
+    /* Input-uri (Fix Vizibilitate) */
     input, div[data-baseweb="select"] > div {
-        background-color: rgba(0, 0, 0, 0.9) !important;
+        background-color: rgba(0, 0, 0, 0.8) !important;
         color: white !important;
-        border: 1px solid #333 !important;
-        border-radius: 10px !important;
+        border: 1px solid #334155 !important;
+        border-radius: 12px !important;
     }
 
-    label p { color: #e0e1dd !important; }
+    label p { color: #cbd5e1 !important; }
 
     hr {
         border: 0;
@@ -89,13 +94,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logica Navigatie (cu Keys unice pentru fix parola)
+# 3. Logica Navigatie
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
 if st.session_state.page == 'home':
     st.markdown("<div class='logo-text'>Catalog Digital</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Portal de Management Educațional</div>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitle'>Platformă Securizată</div>", unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
     
     if st.button("PROFESOR"):
@@ -109,27 +114,17 @@ if st.session_state.page == 'home':
         st.rerun()
 
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='logo-text'>Logare Prof</div>", unsafe_allow_html=True)
-    materia = st.selectbox("Alege Materia", ["Matematică", "Română", "Fizică"], key="sel_prof_v37")
-    parola = st.text_input("Introdu Parola", type="password", key="pwd_prof_v37")
+    st.markdown("<div class='logo-text'>Acces Prof</div>", unsafe_allow_html=True)
+    st.write("")
+    materia = st.selectbox("Disciplina", ["Matematică", "Română", "Engleză"], key="prof_v38")
+    parola = st.text_input("Parolă", type="password", key="pwd_prof_v38")
     
     if st.button("AUTENTIFICARE"):
         if parola == "123451":
-            st.success("Sistem deblocat!")
+            st.success("Sistem deblocat")
         else:
-            st.error("Parolă incorectă.")
+            st.error("Eroare!")
             
-    if st.button("← ÎNAPOI"):
-        st.session_state.page = 'home'
-        st.rerun()
-
-elif st.session_state.page == 'login_directoare':
-    st.markdown("<div class='logo-text'>Directoare</div>", unsafe_allow_html=True)
-    parola_d = st.text_input("Cod Managerial", type="password", key="pwd_dir_v37")
-    
-    if st.button("ACCES SISTEM"):
-        st.warning("Se verifică autorizația...")
-        
     if st.button("← ÎNAPOI"):
         st.session_state.page = 'home'
         st.rerun()
