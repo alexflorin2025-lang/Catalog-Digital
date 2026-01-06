@@ -2,85 +2,74 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 
-# 1. Configurare Pagina - Am setat layout="wide" pentru latime maxima
-st.set_page_config(page_title="Catalog Digital Ultra-Wide", layout="wide")
+# 1. Configurare Pagina - Layout Wide obligatoriu pentru latime
+st.set_page_config(page_title="Catalog Digital Wide", layout="wide")
 
-# 2. CSS pentru Latime Maxima (--------->>)
+# 2. CSS pentru butoane si containere ultra-late
 st.markdown("""
     <style>
-    /* Fundal general */
+    /* Fundal general dark */
     .stApp { background-color: #0d1117 !important; }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CONTAINERUL - Acum ocupa toata latimea ecranului */
+    /* Containerul principal - Fara limita de latime */
     .main .block-container {
-        max-width: 95% !important; /* SE INTINDE PE TOT ECRANUL --------->> */
-        padding-top: 50px !important;
-        padding-bottom: 50px !important;
-        margin: 0 auto !important;
+        max-width: 98% !important; 
+        padding-top: 2rem !important;
     }
 
-    /* CARDUL CENTRAL */
-    .card-background {
+    /* Stilul Cardului care prinde tot ecranul --------->> */
+    .wide-card {
         background-color: #161b22;
         border: 1px solid #30363d;
         border-radius: 20px;
-        padding: 60px 5% !important;
+        padding: 50px 2% !important;
         width: 100% !important;
+        margin-bottom: 20px;
     }
 
-    /* TITLURI */
-    .titlu-ultra {
+    /* TITLUL */
+    .titlu-mare {
         text-align: center;
         color: #58a6ff;
-        font-size: clamp(2rem, 8vw, 3.5rem); /* Se adapteaza la ecran */
+        font-size: 3rem;
         font-weight: 800;
-        margin-bottom: 10px;
-    }
-    
-    .status-online {
-        text-align: center;
-        color: #238636;
-        font-weight: bold;
-        margin-bottom: 60px;
-        font-size: 1.1rem;
+        margin-bottom: 40px;
     }
 
-    /* BUTOANELE ULTRA-LATE (--------->>) */
+    /* BUTOANELE LATE (--------->>) */
     .stButton > button {
-        width: 100% !important; /* OCUPA TOATA LATIMEA CARDULUI */
-        height: 80px !important;
+        width: 100% !important; /* Ocupa toata latimea ecranului */
+        height: 90px !important;
         background-color: #21262d !important;
         color: white !important;
         border: 2px solid #30363d !important;
         border-radius: 15px !important;
-        font-size: 1.4rem !important;
+        font-size: 1.5rem !important;
         font-weight: bold !important;
         margin-bottom: 30px !important;
-        transition: 0.3s;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: 0.3s ease;
     }
     
     .stButton > button:hover {
         border-color: #58a6ff !important;
-        background-color: #30363d !important;
-        box-shadow: 0px 0px 20px rgba(88, 166, 255, 0.2);
+        background-color: #1f242c !important;
+        transform: scale(1.01);
     }
 
-    /* INPUT-URILE (Selectbox si Password) - Acum sunt LATE */
-    div[data-baseweb="select"], div[data-baseweb="input"], input {
+    /* Input-uri late pentru pagina de login */
+    div[data-baseweb="input"], div[data-baseweb="select"], input {
         width: 100% !important;
-        min-height: 60px !important;
+        height: 60px !important;
         background-color: #0d1117 !important;
         color: white !important;
         border-radius: 12px !important;
-        font-size: 1.2rem !important;
     }
-    
-    label { 
-        color: #f0f6fc !important; 
-        font-size: 1.3rem !important;
-        margin-bottom: 15px !important;
-    }
+
+    label { color: #f0f6fc !important; font-size: 1.2rem !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -88,37 +77,34 @@ st.markdown("""
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
-# Folosim un container tip card pentru tot continutul
+# --- CONTAINERUL CARE FACE TOTUL LAT ---
 with st.container():
-    st.markdown('<div class="card-background">', unsafe_allow_html=True)
-    
-    # --- PAGINA START (ULTRA-LATA) ---
+    st.markdown('<div class="wide-card">', unsafe_allow_html=True)
+
+    # --- ECRAN START: Profesor, Parinte, Director ---
     if st.session_state.page == 'home':
-        st.markdown("<div class='titlu-ultra'>🎓 Catalog Digital</div>", unsafe_allow_html=True)
-        st.markdown("<div class='status-online'>● SISTEM ONLINE SECURIZAT</div>", unsafe_allow_html=True)
+        st.markdown("<div class='titlu-mare'>🎓 Catalog Digital</div>", unsafe_allow_html=True)
         
-        # Butoane late
-        if st.button("👨‍🏫 Autentificare Modul Profesor"):
+        # Butoanele se vor intinde pe toata latimea acum
+        if st.button("👨‍🏫 ACCES MODUL PROFESOR"):
             st.session_state.page = 'login_profesor'
             st.rerun()
 
-        if st.button("👪 Vizualizare Părinte / Elev"):
+        if st.button("👪 ACCES PĂRINȚI / ELEVI"):
             st.session_state.page = 'login_parinte'
             st.rerun()
 
-        if st.button("🛡️ Administrare Unitate Școlară"):
+        if st.button("🛡️ PANOU CONTROL DIRECTOR"):
             st.session_state.page = 'login_administrator'
             st.rerun()
 
-    # --- PAGINA LOGIN ---
+    # --- PAGINA LOGIN PROFESOR ---
     elif st.session_state.page == 'login_profesor':
-        st.markdown("<div class='titlu-ultra'>🔑 Logare Securizată</div>", unsafe_allow_html=True)
+        st.markdown("<div class='titlu-mare'>🔑 Autentificare Profesor</div>", unsafe_allow_html=True)
         
-        st.write("<br>", unsafe_allow_html=True)
-        materia = st.selectbox("Selectați Disciplina Predată:", ["Matematică", "Limba Română", "Fizică", "Istorie"])
-        
-        st.write("<br>", unsafe_allow_html=True)
-        parola = st.text_input("Introduceți Parola de Acces:", type="password")
+        materia = st.selectbox("Selectați Materia:", ["Limba Română", "Matematică", "Engleză", "Istorie"])
+        st.write("")
+        parola = st.text_input("Parolă de acces:", type="password")
         
         st.write("<br>", unsafe_allow_html=True)
         if st.button("🚀 CONECTARE"):
@@ -126,10 +112,10 @@ with st.container():
                 st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia, "page": "main"})
                 st.rerun()
             else:
-                st.error("❌ Parolă incorectă!")
+                st.error("Parolă incorectă!")
                 
         if st.button("⬅️ Înapoi la Meniu"):
             st.session_state.page = 'home'
             st.rerun()
-            
+
     st.markdown('</div>', unsafe_allow_html=True)
