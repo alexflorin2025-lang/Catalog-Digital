@@ -3,10 +3,9 @@ import streamlit as st
 # 1. Configurare Pagina
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS - Ultra Dark, Glassmorphism & Dark Buttons
+# 2. CSS - Ultra Dark, Glassmorphism & Butoane Negre
 st.markdown("""
     <style>
-    /* Fundal cu Imagine de Clasă + Overlay Cinematic foarte închis */
     .stApp {
         background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), 
                     url("https://images.unsplash.com/photo-1546410531-bb4ffa13a774?q=80&w=2940&auto=format&fit=crop");
@@ -17,7 +16,6 @@ st.markdown("""
 
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* Containerul central - Glassmorphism */
     .main .block-container {
         background: rgba(10, 10, 10, 0.6) !important;
         backdrop-filter: blur(25px);
@@ -30,7 +28,6 @@ st.markdown("""
         margin-top: 5vh;
     }
 
-    /* Titlu cu Glow */
     .logo-text {
         font-family: 'Inter', sans-serif;
         font-size: 3rem;
@@ -48,13 +45,13 @@ st.markdown("""
         margin-bottom: 40px;
     }
 
-    /* BUTOANE NEGRE (DARK) --------->> */
+    /* BUTOANE NEGRE MODERNE */
     div.stButton > button {
         width: 100% !important;
         height: 60px !important;
-        background: #050505 !important; /* Negru intens */
-        color: #ffffff !important; /* Text Alb */
-        border: 1px solid #1b263b !important; /* Contur discret */
+        background: #050505 !important;
+        color: #ffffff !important;
+        border: 1px solid #1b263b !important;
         border-radius: 15px !important;
         font-size: 1.1rem !important;
         font-weight: 700 !important;
@@ -64,17 +61,19 @@ st.markdown("""
     
     div.stButton > button:hover {
         background: #111111 !important;
-        border-color: #ffffff !important; /* Glow alb la contur pe hover */
+        border-color: #ffffff !important;
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
     }
 
-    /* Input-uri */
+    /* Input-uri Ultra Dark */
     input, div[data-baseweb="select"] > div {
-        background-color: rgba(0, 0, 0, 0.8) !important;
+        background-color: rgba(0, 0, 0, 0.9) !important;
         color: white !important;
-        border: 1px solid #222 !important;
+        border: 1px solid #333 !important;
+        border-radius: 10px !important;
     }
+
+    label p { color: #e0e1dd !important; }
 
     hr {
         border: 0;
@@ -89,36 +88,60 @@ st.markdown("""
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
 
+# --- ECRAN START ---
 if st.session_state.page == 'home':
     st.markdown("<div class='logo-text'>Catalog Digital</div>", unsafe_allow_html=True)
-    st.markdown("<div class='subtitle'>Alegeți metoda de autentificare</div>", unsafe_allow_html=True)
-    
+    st.markdown("<div class='subtitle'>Sistem Securizat de Management</div>", unsafe_allow_html=True)
     st.markdown("<hr>", unsafe_allow_html=True)
     
-    # Butoanele acum sunt DARK
     if st.button("PROFESOR"):
         st.session_state.page = 'login_profesor'
         st.rerun()
-        
     if st.button("PĂRINTE / ELEV"):
         st.session_state.page = 'login_parinte'
         st.rerun()
-        
     if st.button("DIRECTOARE"):
         st.session_state.page = 'login_directoare'
         st.rerun()
 
+# --- LOGIN PROFESOR (Fix Parola) ---
 elif st.session_state.page == 'login_profesor':
-    st.markdown("<div class='logo-text'>Logare</div>", unsafe_allow_html=True)
-    materia = st.selectbox("Materia", ["Matematică", "Română", "Fizică"])
-    parola = st.text_input("Cheie Acces", type="password")
+    st.markdown("<div class='logo-text'>Logare Prof</div>", unsafe_allow_html=True)
+    materia = st.selectbox("Alege Materia", ["Matematică", "Română", "Fizică"], key="sel_prof")
+    # key="pwd_prof" rezolvă eroarea de input
+    parola = st.text_input("Introdu Parola", type="password", key="pwd_prof")
     
     if st.button("AUTENTIFICARE"):
         if parola == "123451":
-            st.success("Bun venit!")
+            st.success("Acces permis!")
         else:
-            st.error("Acces neautorizat.")
+            st.error("Parolă greșită.")
             
+    if st.button("← ÎNAPOI"):
+        st.session_state.page = 'home'
+        st.rerun()
+
+# --- LOGIN PĂRINTE (Fix Parola) ---
+elif st.session_state.page == 'login_parinte':
+    st.markdown("<div class='logo-text'>Părinte / Elev</div>", unsafe_allow_html=True)
+    cod_elev = st.text_input("Cod Identificare Elev", key="id_elev")
+    parola_p = st.text_input("Parolă Părinte", type="password", key="pwd_parinte")
+    
+    if st.button("VEZI SITUAȚIA"):
+        st.info("Se încarcă datele...")
+        
+    if st.button("← ÎNAPOI"):
+        st.session_state.page = 'home'
+        st.rerun()
+
+# --- LOGIN DIRECTOARE (Fix Parola) ---
+elif st.session_state.page == 'login_directoare':
+    st.markdown("<div class='logo-text'>Directoare</div>", unsafe_allow_html=True)
+    parola_d = st.text_input("Cod Managerial", type="password", key="pwd_dir")
+    
+    if st.button("ACCES TOTAL"):
+        st.warning("Se deschide panoul de control...")
+        
     if st.button("← ÎNAPOI"):
         st.session_state.page = 'home'
         st.rerun()
