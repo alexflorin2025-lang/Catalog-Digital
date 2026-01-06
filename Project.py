@@ -1,125 +1,131 @@
 import streamlit as st
 
-# 1. Configurare Pagina
+# 1. Configurare Pagina - Centrat pentru a sta în mijloc
 st.set_page_config(page_title="Catalog Digital", layout="centered")
 
-# 2. CSS - Ultra Dark, Mirror Gradient & No Scroll
+# 2. CSS PREMIUM - Chenar Central (Card)
 st.markdown("""
     <style>
-    html, body, [data-testid="stAppViewContainer"] {
-        height: 100vh !important;
-        overflow: hidden !important;
-        background-color: #000;
-    }
-    .stApp {
-        background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
-                    url("https://images.unsplash.com/photo-1546410531-bb4ffa13a774?q=80&w=2940&auto=format");
-        background-size: cover;
-        background-position: center;
-    }
+    /* Fundalul general (în afara chenarului) - Negru pur */
+    .stApp { background-color: #000000 !important; }
     header, footer, #MainMenu {visibility: hidden !important;}
 
-    /* CARDUL CENTRAL CU GRADIENT OGLINDĂ */
-    [data-testid="stVerticalBlock"] > div:has(div.stButton) {
-        background: linear-gradient(to bottom, rgba(60,85,120,0.4), rgba(5,15,30,0.98) 50%, rgba(60,85,120,0.4)) !important;
-        backdrop-filter: blur(15px);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 20px;
-        padding: 25px;
-        width: 340px !important;
-        margin: auto;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+    /* CHENARUL CENTRAL (Cutia) */
+    .main .block-container {
+        background-color: #0d1117 !important; /* Gri foarte închis */
+        border: 2px solid #1f6feb !important; /* Bordură Albastră Elegantă */
+        border-radius: 25px !important; /* Colțuri rotunjite */
+        padding: 50px 30px !important;
+        margin-top: 40px !important;
+        max-width: 480px !important; /* Lățime fixă ca să arate bine centrat */
+        box-shadow: 0px 0px 30px rgba(31, 111, 235, 0.15) !important; /* Umbră fină albastră */
     }
 
-    .catalog-title { color: white; font-size: 1.6rem; font-weight: 800; text-align: center; margin-bottom: 10px; }
+    /* TITLUL */
+    .titlu-principal {
+        text-align: center;
+        color: #ffffff;
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
     
-    /* BUTOANE NEGRE */
+    .subtitlu {
+        text-align: center;
+        color: #8b949e;
+        font-size: 0.9rem;
+        margin-bottom: 40px;
+    }
+
+    /* BUTOANELE - Centrate și late în interiorul chenarului */
     div.stButton > button {
         width: 100% !important;
-        background-color: #000 !important;
-        color: #fff !important;
-        height: 45px;
-        border-radius: 10px;
-        border: 1px solid #333;
-        font-weight: 700;
-        margin-top: 5px;
+        height: 65px !important;
+        background-color: #161b22 !important;
+        color: white !important;
+        border: 1px solid #30363d !important;
+        border-radius: 12px !important;
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        margin-bottom: 15px !important;
+        transition: 0.3s;
     }
     
-    /* INPUTURI */
-    input, div[data-baseweb="select"] > div {
-        background-color: rgba(0,0,0,0.7) !important;
-        color: white !important;
-        border: 1px solid #444 !important;
+    div.stButton > button:hover {
+        border-color: #1f6feb !important; /* Se face albastru la atingere */
+        color: #58a6ff !important;
+        background-color: #1f242c !important;
     }
-    label p { color: #aaa !important; font-size: 0.8rem; }
+
+    /* INPUT-URI (pentru login) */
+    input, .stSelectbox > div > div {
+        background-color: #0d1117 !important;
+        color: white !important;
+        border: 1px solid #30363d !important;
+    }
+    
+    label { color: #8b949e !important; }
+    
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logica de Navigare și Stări
+# 3. Logica Aplicatiei
 if 'page' not in st.session_state:
     st.session_state.page = 'home'
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
 
-# --- LOGICĂ PAGINI ---
-
-# PAGINA PRINCIPALĂ
+# --- ECRAN START ---
 if st.session_state.page == 'home':
-    st.markdown("<div class='catalog-title'>Catalog Digital</div>", unsafe_allow_html=True)
-    if st.button("PROFESOR"): st.session_state.page = 'login_profesor'; st.rerun()
-    if st.button("PĂRINTE / ELEV"): st.session_state.page = 'login_parinte'; st.rerun()
-    if st.button("DIRECTOARE"): st.session_state.page = 'login_directoare'; st.rerun()
-
-# PAGINA LOGIN PROFESOR
-elif st.session_state.page == 'login_profesor' and not st.session_state.authenticated:
-    st.markdown("<div class='catalog-title'>Logare Prof</div>", unsafe_allow_html=True)
-    materia = st.selectbox("Materia", ["Matematică", "Română", "Fizică"], key="sel_prof")
-    parola = st.text_input("Parolă", type="password", key="pwd_prof")
+    # Titlul
+    st.markdown("<div class='titlu-principal'>Catalog Digital</div>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitlu'>Alegeți tipul de acces:</div>", unsafe_allow_html=True)
     
-    if st.button("CONECTARE"):
-        if parola == "1234": # Poți schimba parola aici
-            st.session_state.authenticated = True
+    # Butoanele în chenar
+    if st.button("👨‍🏫  Profesor"):
+        st.session_state.page = 'login_profesor'
+        st.rerun()
+
+    if st.button("👨‍👩‍👧  Părinte / Elev"):
+        st.session_state.page = 'login_parinte'
+        st.rerun()
+
+    # Aici am modificat: DIRECTOR în loc de Administrator
+    if st.button("👔  Director"):
+        st.session_state.page = 'login_director'
+        st.rerun()
+
+# --- LOGIN PROFESOR ---
+elif st.session_state.page == 'login_profesor':
+    st.markdown("<div class='titlu-principal'>Acces Profesor</div>", unsafe_allow_html=True)
+    st.write("")
+    
+    materia = st.selectbox("Disciplina:", ["Matematică", "Română", "Engleză", "Istorie"])
+    st.write("")
+    parola = st.text_input("Parola:", type="password")
+    
+    st.write("<br>", unsafe_allow_html=True)
+    
+    if st.button("Autentificare"):
+        if parola == "123451":
+            st.session_state.update({"logged_in": True, "role": "teacher", "materia": materia})
             st.rerun()
         else:
-            st.error("Parolă incorectă!")
-    if st.button("← ÎNAPOI"): st.session_state.page = 'home'; st.rerun()
-
-# INTERFAȚA PROFESOR (Dupa Logare)
-elif st.session_state.page == 'login_profesor' and st.session_state.authenticated:
-    st.markdown("<div class='catalog-title'>Panou Profesor</div>", unsafe_allow_html=True)
-    
-    actiune = st.radio("Ce doriți să introduceți?", ["Notă", "Absență"], key="act_prof")
-    st.selectbox("Alege Elevul", ["Popescu Ion", "Ionescu Ana", "Vasile Dan"], key="elev_prof")
-    
-    if actiune == "Notă":
-        st.slider("Selectează Nota", 1, 10, 10, key="nota_val")
-        if st.button("SALVEAZĂ NOTA"):
-            st.success("Nota a fost pusă!")
-    else:
-        st.date_input("Data Absenței", key="data_abs")
-        if st.button("SALVEAZĂ ABSENȚA"):
-            st.warning("Absență înregistrată!")
-
-    if st.button("IEȘIRE (LOGOUT)"):
-        st.session_state.authenticated = False
+            st.error("Parolă greșită!")
+            
+    if st.button("← Înapoi"):
         st.session_state.page = 'home'
         st.rerun()
 
-# PAGINA LOGIN PĂRINTE
-elif st.session_state.page == 'login_parinte':
-    st.markdown("<div class='catalog-title'>Părinte / Elev</div>", unsafe_allow_html=True)
-    st.text_input("Cod ID Elev", key="id_el")
-    parola_el = st.text_input("Parolă", type="password", key="pwd_el")
-    if st.button("VEZI CATALOG"):
-        if parola_el == "elev123": st.info("Se încarcă notele...")
-        else: st.error("Parolă incorectă!")
-    if st.button("← ÎNAPOI"): st.session_state.page = 'home'; st.rerun()
-
-# PAGINA LOGIN DIRECTOARE
-elif st.session_state.page == 'login_directoare':
-    st.markdown("<div class='catalog-title'>Directoare</div>", unsafe_allow_html=True)
-    pwd_d = st.text_input("Cod Manager", type="password", key="pwd_dir")
-    if st.button("ACCES"):
-        if pwd_d == "admin": st.success("Acces panou control")
-        else: st.error("Cod invalid!")
-    if st.button("← ÎNAPOI"): st.session_state.page = 'home'; st.rerun()
+# --- LOGIN DIRECTOR (Nou) ---
+elif st.session_state.page == 'login_director':
+    st.markdown("<div class='titlu-principal'>Acces Director</div>", unsafe_allow_html=True)
+    st.write("")
+    
+    parola = st.text_input("Parolă Director:", type="password")
+    
+    st.write("<br>", unsafe_allow_html=True)
+    if st.button("Logare Director"):
+        st.success("Bine ați venit, Domnule Director!")
+    
+    if st.button("← Înapoi"):
+        st.session_state.page = 'home'
+        st.rerun()
