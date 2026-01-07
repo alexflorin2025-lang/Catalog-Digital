@@ -80,10 +80,18 @@ st.markdown("""
         margin: 10px 0 !important;
     }
     
+    .success-box {
+        background: rgba(34, 197, 94, 0.1) !important;
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
+        border-radius: 8px !important;
+        padding: 15px !important;
+        margin: 10px 0 !important;
+    }
+    
     </style>
 """, unsafe_allow_html=True)
 
-# 3. Parole individuale
+# 3. PROFESORI - fiecare cu materie proprie (mai mulți profesori pot avea aceeași materie)
 PROFESORI = {
     "Popescu Maria": {
         "materie": "Matematică",
@@ -100,9 +108,26 @@ PROFESORI = {
     "Marinescu Dan": {
         "materie": "Biologie",
         "parola_hash": hashlib.sha256("ProfMarinescu2026@".encode()).hexdigest()
+    },
+    "Vasilescu Elena": {
+        "materie": "Limba engleză",
+        "parola_hash": hashlib.sha256("ProfVasilescu2026@".encode()).hexdigest()
+    },
+    "Constantin Mihai": {
+        "materie": "Istorie",
+        "parola_hash": hashlib.sha256("ProfConstantin2026@".encode()).hexdigest()
+    },
+    "Dumitrescu Andreea": {
+        "materie": "Geografie",
+        "parola_hash": hashlib.sha256("ProfDumitrescu2026@".encode()).hexdigest()
+    },
+    "Stanescu Vlad": {
+        "materie": "Fizică",
+        "parola_hash": hashlib.sha256("ProfStanescu2026@".encode()).hexdigest()
     }
 }
 
+# 4. ELEVI - nume și parole
 ELEVI = {
     "Albert": "Albert2026#",
     "Alexandru": "Alexandru2026#",
@@ -133,8 +158,10 @@ ELEVI = {
     "Popescu Dan": "PopescuD2026#"
 }
 
+# 5. Parola directoare
 PAROLA_DIRECTOARE = hashlib.sha256("Directoare2026@".encode()).hexdigest()
 
+# 6. Toate materiile de gimnaziu
 MATERII_GIMNAZIU = [
     "Limba și literatura română", "Matematică", "Limba engleză", "Limba franceză",
     "Limba germană", "Istorie", "Geografie", "Biologie", "Fizică", "Chimie",
@@ -142,11 +169,13 @@ MATERII_GIMNAZIU = [
     "Educație tehnologică", "Informatică și TIC", "Religie", "Consiliere și orientare"
 ]
 
+# 7. Initializare Baza de Date
 @st.cache_resource
 def init_db():
     conn = sqlite3.connect('catalog_2026.db', check_same_thread=False)
     c = conn.cursor()
     
+    # Note
     c.execute('''CREATE TABLE IF NOT EXISTS grades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
@@ -158,6 +187,7 @@ def init_db():
         UNIQUE(data, nume, materie)
     )''')
     
+    # Absențe - DOAR pentru ziua respectivă
     c.execute('''CREATE TABLE IF NOT EXISTS absente (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
@@ -167,25 +197,31 @@ def init_db():
         UNIQUE(data, nume, materie)
     )''')
     
+    # Observații cu tip (laudă, mustrare, atenționare)
     c.execute('''CREATE TABLE IF NOT EXISTS observatii (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
         nume TEXT,
         materie TEXT,
         observatie TEXT,
+        tip TEXT,
         profesor TEXT
     )''')
     
+    # Purtare cu istoric modificări
     c.execute('''CREATE TABLE IF NOT EXISTS purtare (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nume TEXT UNIQUE,
-        nota INTEGER DEFAULT 10,
-        semestru INTEGER DEFAULT 1
+        nume TEXT,
+        nota INTEGER,
+        data_modificare DATE,
+        motiv TEXT,
+        profesor TEXT
     )''')
     
     conn.commit()
     return conn
 
+# 8. Funcții utilitare
 def verify_password(password, role, username=None):
     if role == "teacher" and username:
         return PROFESORI.get(username, {}).get("parola_hash") == hashlib.sha256(password.encode()).hexdigest()
@@ -196,6 +232,7 @@ def verify_password(password, role, username=None):
     return False
 
 def elev_are_absenta(data_str, nume_elev, materie, conn):
+    """Verifică dacă elevul are absență în ziua respectivă"""
     cursor = conn.cursor()
     cursor.execute('SELECT 1 FROM absente WHERE data = ? AND nume = ? AND materie = ?', 
                    (data_str, nume_elev, materie))
@@ -222,35 +259,67 @@ def get_media_elev(nume_elev, materie, conn):
     result = cursor.fetchone()
     return round(result[0], 2) if result and result[0] else 0.00
 
-def init_purtare(conn):
+def get_nota_purtare_curenta(nume_elev, conn):
+    """Obține ultima notă de purtare pentru elev"""
     cursor = conn.cursor()
-    for elev in ELEVI.keys():
-        cursor.execute("INSERT OR IGNORE INTO purtare (nume, nota) VALUES (?, ?)", (elev, 10))
+    cursor.execute('''
+        SELECT nota FROM purtare 
+        WHERE nume = ? 
+        ORDER BY data_modificare DESC 
+        LIMIT 1
+    ''', (nume_elev,))
+    result = cursor.fetchone()
+    return result[0] if result else 10  # Default 10 dacă nu există
+
+def update_purtare(nume_elev, nota_noua, motiv, profesor, conn):
+    """Actualizează nota de purtare cu motiv"""
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO purtare (nume, nota, data_modificare, motiv, profesor) 
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nume_elev, nota_noua, datetime.now().date().strftime("%Y-%m-%d"), motiv, profesor))
     conn.commit()
 
-conn = init_db()
-init_purtare(conn)
+def get_observatii_elev(nume_elev, conn):
+    """Obține toate observațiile pentru un elev"""
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT data, materie, observatie, tip, profesor 
+        FROM observatii 
+        WHERE nume = ? 
+        ORDER BY data DESC
+    ''', (nume_elev,))
+    return cursor.fetchall()
 
+def adauga_observatie(data_str, nume_elev, materie, observatie, tip, profesor, conn):
+    """Adaugă o observație nouă"""
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO observatii (data, nume, materie, observatie, tip, profesor) 
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (data_str, nume_elev, materie, observatie, tip, profesor))
+    conn.commit()
+
+# 9. Setup baza de date
+conn = init_db()
+
+# 10. Clasele
 CLASE = {
     "6B": [e for e in ELEVI.keys() if e not in ["Ionescu Maria", "Popescu Dan"]],
     "7A": ["Ionescu Maria", "Popescu Dan"]
 }
 
+# 11. Inițializare session state
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
-if 'role' not in st.session_state:
     st.session_state.role = None
-if 'username' not in st.session_state:
     st.session_state.username = None
-if 'materie' not in st.session_state:
     st.session_state.materie = None
-if 'nume_elev' not in st.session_state:
     st.session_state.nume_elev = None
-if 'clasa_selectata' not in st.session_state:
     st.session_state.clasa_selectata = "6B"
-if 'selected_date' not in st.session_state:
     st.session_state.selected_date = datetime.now().strftime("%Y-%m-%d")
 
+# 12. Funcții pentru afișare
 def display_current_selection():
     if st.session_state.role == "teacher":
         st.markdown(f"""
@@ -270,7 +339,9 @@ def display_current_selection():
         </div>
         """, unsafe_allow_html=True)
 
-# LOGIN PAGE
+# ============================================
+# PAGINA DE LOGIN
+# ============================================
 if not st.session_state.logged_in:
     st.markdown("""
     <div style="text-align: center; padding: 30px 0;">
@@ -283,21 +354,20 @@ if not st.session_state.logged_in:
         st.info("""
         **Parole pentru testare (2026):**
         
-        **Profesori:**
-        - Popescu Maria: ProfPopescu2026@
-        - Ionescu Ion: ProfIonescu2026@
-        - Georgescu Ana: ProfGeorgescu2026@
-        - Marinescu Dan: ProfMarinescu2026@
+        **Profesori:** ProfNume2026@ (ex: ProfPopescu2026@)
         
         **Elevi/Părinți:** NumeElev2026# (ex: Albert2026#)
         
         **Directoare:** Directoare2026@
+        
+        **Materii disponibile:** Toate materiile de gimnaziu
         """)
     
     tab_prof, tab_parinte, tab_directoare = st.tabs(["👨‍🏫 Profesor", "👪 Părinte", "🏛️ Directoare"])
     
     with tab_prof:
         st.subheader("Autentificare Profesor")
+        # Profesorul selectează numele său
         profesor_selectat = st.selectbox("Selectează numele tău", list(PROFESORI.keys()), key="login_profesor")
         parola = st.text_input("Introdu parola ta", type="password", key="parola_prof")
         
@@ -348,7 +418,9 @@ if not st.session_state.logged_in:
             else:
                 st.error("Cod incorect!")
 
-# MAIN PAGE
+# ============================================
+# PAGINA PRINCIPALĂ
+# ============================================
 else:
     col_title, col_logout = st.columns([4, 1])
     
@@ -368,10 +440,12 @@ else:
     
     display_current_selection()
     
-    # TEACHER INTERFACE
+    # ============================================
+    # INTERFAȚA PROFESOR
+    # ============================================
     if st.session_state.role == "teacher":
         st.markdown("---")
-        menu_options = ["📝 Adaugă note/absente", "📊 Vezi note existente", "✏️ Modifică/șterge note"]
+        menu_options = ["📝 Adaugă note/absente/observații", "📊 Vezi note existente", "✏️ Modifică/șterge note"]
         selected_menu = st.radio("Alege acțiunea:", menu_options, horizontal=True, key="prof_menu")
         
         clasa = st.selectbox("Selectează clasa", list(CLASE.keys()), key="prof_clasa")
@@ -403,6 +477,7 @@ else:
             </div>
             """, unsafe_allow_html=True)
         
+        # Calendar săptămânal
         st.markdown("#### 📅 Săptămâna curentă")
         today = date.today()
         start_of_week = today - timedelta(days=today.weekday())
@@ -442,9 +517,11 @@ else:
         
         st.markdown(f"### 👥 Elevi - {len(elevi_filtrati)} total")
         
-        if selected_menu == "📝 Adaugă note/absente":
+        if selected_menu == "📝 Adaugă note/absente/observații":
             for elev in elevi_filtrati:
                 with st.expander(f"👤 {elev}", expanded=False):
+                    # Secțiunea pentru note
+                    st.markdown("#### 📝 Note")
                     are_absenta = elev_are_absenta(data_str, elev, st.session_state.materie, conn)
                     
                     if are_absenta:
@@ -503,6 +580,67 @@ else:
                                         st.rerun()
                                     except sqlite3.IntegrityError:
                                         st.error("Absența există deja!")
+                    
+                    st.markdown("---")
+                    
+                    # Secțiunea pentru observații
+                    st.markdown("#### 📝 Observații")
+                    observatie = st.text_area("Observație comportamentală", 
+                                            placeholder="Scrie observația aici...",
+                                            key=f"obs_{elev}",
+                                            height=100)
+                    
+                    col_obs1, col_obs2, col_obs3 = st.columns(3)
+                    
+                    with col_obs1:
+                        if st.button("👏 Laudă", key=f"lauda_{elev}", use_container_width=True):
+                            if observatie.strip():
+                                adauga_observatie(data_str, elev, st.session_state.materie, 
+                                                observatie.strip(), "laudă", st.session_state.username, conn)
+                                st.success(f"Laudă adăugată pentru {elev}!")
+                                st.rerun()
+                    
+                    with col_obs2:
+                        if st.button("⚠️ Atenționare", key=f"atentionare_{elev}", use_container_width=True):
+                            if observatie.strip():
+                                adauga_observatie(data_str, elev, st.session_state.materie, 
+                                                observatie.strip(), "atenționare", st.session_state.username, conn)
+                                st.warning(f"Atenționare adăugată pentru {elev}!")
+                                st.rerun()
+                    
+                    with col_obs3:
+                        if st.button("❌ Mustrare", key=f"mustrare_{elev}", use_container_width=True):
+                            if observatie.strip():
+                                adauga_observatie(data_str, elev, st.session_state.materie, 
+                                                observatie.strip(), "mustrare", st.session_state.username, conn)
+                                st.error(f"Mustrare adăugată pentru {elev}!")
+                                st.rerun()
+                    
+                    st.markdown("---")
+                    
+                    # Secțiunea pentru purtare
+                    st.markdown("#### ⭐ Purtare")
+                    nota_purtare_curenta = get_nota_purtare_curenta(elev, conn)
+                    st.write(f"**Nota curentă de purtare:** {nota_purtare_curenta}")
+                    
+                    col_purt1, col_purt2 = st.columns([2, 1])
+                    
+                    with col_purt1:
+                        noua_nota_purtare = st.slider("Setează nota de purtare", 1, 10, nota_purtare_curenta,
+                                                    key=f"purt_{elev}")
+                        motiv_purtare = st.text_input("Motivul modificării", 
+                                                    placeholder="Scrie motivul modificării...",
+                                                    key=f"motiv_{elev}")
+                    
+                    with col_purt2:
+                        if st.button("💾 Salvează purtare", key=f"save_purt_{elev}", use_container_width=True):
+                            if motiv_purtare.strip():
+                                update_purtare(elev, noua_nota_purtare, motiv_purtare.strip(), 
+                                            st.session_state.username, conn)
+                                st.success(f"Nota de purtare actualizată pentru {elev}: {noua_nota_purtare}")
+                                st.rerun()
+                            else:
+                                st.error("Te rog completează motivul modificării!")
         
         elif selected_menu == "📊 Vezi note existente":
             st.markdown(f"### 📋 Note existente - {st.session_state.materie}")
@@ -611,12 +749,16 @@ else:
             else:
                 st.info("Nu s-au găsit note conform criteriilor de căutare.")
     
-    # PARENT INTERFACE
+    # ============================================
+    # INTERFAȚA PĂRINTE
+    # ============================================
     elif st.session_state.role == "parent":
         elev = st.session_state.nume_elev
         clasa = st.session_state.clasa_selectata
         
-        tab_medii, tab_note, tab_absente = st.tabs(["📊 Medii", "📝 Note detalii", "❌ Absențe"])
+        tab_medii, tab_note, tab_absente, tab_observatii, tab_purtare = st.tabs(
+            ["📊 Medii", "📝 Note", "❌ Absențe", "📋 Observații", "⭐ Purtare"]
+        )
         
         with tab_medii:
             st.markdown("### 📈 Medii pe materii")
@@ -708,8 +850,69 @@ else:
                 st.dataframe(absente_df, use_container_width=True, hide_index=True, height=300)
             else:
                 st.success("✅ Nu există absențe înregistrate.")
+        
+        with tab_observatii:
+            st.markdown("### 📋 Observații de la profesori")
+            
+            observatii = get_observatii_elev(elev, conn)
+            
+            if observatii:
+                for obs in observatii:
+                    data_obs, materie_obs, text_obs, tip_obs, prof_obs = obs
+                    data_formatata = datetime.strptime(data_obs, "%Y-%m-%d").strftime("%d.%m.%Y")
+                    
+                    if tip_obs == "laudă":
+                        st.markdown(f"""
+                        <div class="success-box">
+                            <strong>👏 Laudă - {data_formatata}</strong><br>
+                            <strong>Profesor:</strong> {prof_obs} ({materie_obs})<br>
+                            <strong>Observație:</strong> {text_obs}
+                        </div>
+                        """, unsafe_allow_html=True)
+                    elif tip_obs == "mustrare":
+                        st.markdown(f"""
+                        <div class="warning-box">
+                            <strong>❌ Mustrare - {data_formatata}</strong><br>
+                            <strong>Profesor:</strong> {prof_obs} ({materie_obs})<br>
+                            <strong>Observație:</strong> {text_obs}
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:  # atenționare
+                        st.markdown(f"""
+                        <div class="warning-box">
+                            <strong>⚠️ Atenționare - {data_formatata}</strong><br>
+                            <strong>Profesor:</strong> {prof_obs} ({materie_obs})<br>
+                            <strong>Observație:</strong> {text_obs}
+                        </div>
+                        """, unsafe_allow_html=True)
+            else:
+                st.success("✅ Nu există observații înregistrate.")
+        
+        with tab_purtare:
+            st.markdown("### ⭐ Situația purtării")
+            
+            # Obține nota curentă de purtare
+            nota_curenta = get_nota_purtare_curenta(elev, conn)
+            st.metric("Nota curentă de purtare", f"{nota_curenta}/10")
+            
+            # Obține istoricul modificărilor
+            istoric_purtare = pd.read_sql('''
+                SELECT nota, data_modificare, motiv, profesor 
+                FROM purtare 
+                WHERE nume = ? 
+                ORDER BY data_modificare DESC
+            ''', conn, params=[elev])
+            
+            if not istoric_purtare.empty:
+                st.markdown("#### 📊 Istoric modificări purtare")
+                istoric_purtare['data_modificare'] = pd.to_datetime(istoric_purtare['data_modificare']).dt.strftime('%d.%m.%Y')
+                st.dataframe(istoric_purtare, use_container_width=True, hide_index=True)
+            else:
+                st.info("Nu există modificări înregistrate pentru purtare.")
     
-    # ADMIN INTERFACE
+    # ============================================
+    # INTERFAȚA DIRECTOARE
+    # ============================================
     else:
         st.markdown("### 🏛️ Panou Administrativ")
         
@@ -760,6 +963,11 @@ else:
                     nr_note = pd.read_sql("SELECT COUNT(*) FROM grades WHERE profesor = ?",
                                         conn, params=[profesor]).iloc[0,0]
                     st.metric("Note adăugate", nr_note)
+                
+                with col_prof3:
+                    nr_obs = pd.read_sql("SELECT COUNT(*) FROM observatii WHERE profesor = ?",
+                                       conn, params=[profesor]).iloc[0,0]
+                    st.metric("Observații", nr_obs)
         
         with tab_elevi:
             st.markdown("### 👤 Management elevi")
@@ -784,9 +992,7 @@ else:
                     st.metric("Absențe", absente)
                 
                 with col_elev4:
-                    purtare = pd.read_sql("SELECT nota FROM purtare WHERE nume = ?",
-                                        conn, params=[elev])
-                    nota_purtare = purtare.iloc[0,0] if not purtare.empty else 10
+                    nota_purtare = get_nota_purtare_curenta(elev, conn)
                     st.metric("Purtare", nota_purtare)
 
 # Footer
@@ -794,6 +1000,6 @@ st.markdown("---")
 st.markdown(f"""
 <div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 10px;">
     <p>🎓 <strong>Catalog Digital</strong> | Anul școlar 2025-2026</p>
-    <p>© 2026 | Sistem integrat de management școlar | Versiunea 4.0</p>
+    <p>© 2026 | Sistem integrat de management școlar | Versiunea 5.0</p>
 </div>
 """, unsafe_allow_html=True)
