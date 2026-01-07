@@ -2,9 +2,8 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 from datetime import datetime
-import hashlib
 
-# 1. Configurare Pagina universală
+# 1. Configurare Pagina
 st.set_page_config(
     page_title="Catalog Digital", 
     page_icon="🎓", 
@@ -12,10 +11,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# 2. CSS responsive pentru toate dispozitivele
+# 2. CSS pentru toate dispozitivele
 st.markdown("""
     <style>
-    /* RESET pentru compatibilitate */
+    /* Reset pentru compatibilitate */
     * {
         box-sizing: border-box;
     }
@@ -68,9 +67,15 @@ st.markdown("""
         border-radius: 8px !important;
     }
     
-    /* Tabs responsive */
+    /* Tabs responsive - MAI MULT SPAȚIU */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 5px !important;
+        gap: 40px !important;
+        justify-content: center !important;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        padding: 10px 20px !important;
+        font-size: 1rem !important;
     }
     
     /* Media queries pentru diferite dispozitive */
@@ -88,6 +93,16 @@ st.markdown("""
         .streamlit-expanderHeader {
             font-size: 0.9rem !important;
             padding: 8px 12px !important;
+        }
+        
+        /* Tabs mai strânse pe mobile */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 15px !important;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            padding: 6px 12px !important;
+            font-size: 0.9rem !important;
         }
     }
     
@@ -117,14 +132,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Parole FIXATE - versiunea simplă care sigur merge
+# 3. Parole simple și clare
 PASSWORDS = {
     "teacher": "123",
     "parent": "1234", 
     "admin": "admin"
 }
 
-# 4. Initializare Baza de Date - versiune simplă
+# 4. Initializare Baza de Date
 def init_db():
     conn = sqlite3.connect('catalog_app.db', check_same_thread=False)
     c = conn.cursor()
@@ -162,9 +177,9 @@ def init_db():
     conn.commit()
     return conn
 
-# 5. Funcții utilitare SIMPLE
+# 5. Funcții utilitare
 def check_password(password, role):
-    """Verifică parola direct - fără hash pentru simplitate"""
+    """Verifică parola"""
     return password == PASSWORDS[role]
 
 def get_purtare(nume, conn):
@@ -213,7 +228,7 @@ if 'logged_in' not in st.session_state:
 if not st.session_state.logged_in:
     st.markdown("<h1>🎓 Catalog Digital</h1>", unsafe_allow_html=True)
     
-    # Tabs pentru diferite roluri
+    # Tabs pentru diferite roluri - CU SPAȚII MAI MARI
     tab_prof, tab_parinte, tab_directoare = st.tabs(["Profesor", "Părinte", "Directoare"])
     
     with tab_prof:
@@ -308,7 +323,7 @@ else:
         with col1:
             today = datetime.now().strftime("%Y-%m-%d")
             note_azi = pd.read_sql(
-                f"SELECT COUNT(*) FROM grades WHERE data = '{today}' AND materie = ?",
+                f"SELECT COUNT(*) FROM grades WHERE data LIKE '{today}%' AND materie = ?",
                 conn, params=[st.session_state.materie]
             ).iloc[0,0]
             st.metric("📝 Note azi", note_azi)
