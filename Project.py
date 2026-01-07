@@ -1,3 +1,52 @@
+
+
+import streamlit as st import sqlite3 import pandas as pd from datetime import datetime, date, timedelta import hashlib # 1. Configurare Pagina st.set_page_config( page_title="Catalog Digital", page_icon="🎓", layout="wide", initial_sidebar_state="expanded" ) # 2. C
+
+pasted
+
+This is my code can you  adjust a little because the app has  bugs
+
+21:19
+I'll analyze your code and fix the bugs. Here are the main issues I found and their solutions:
+
+Catalog Digital - Bug Fixes
+Code 
+Continue
+
+21:22
+I've identified and fixed several critical bugs in your code:
+
+Main Bugs Fixed:
+Session State Initialization - Added proper individual initialization for each session variable to prevent KeyError exceptions
+Date Object Conversion - Fixed the date_input issue by converting the string date back to a date object
+Database Error Handling - Added try-except blocks for IntegrityError when inserting duplicate entries
+Float Conversion - Fixed nota_noua default value by converting to float for the number_input
+Database Connection - Used @st.cache_resource for database initialization to prevent connection issues
+Logout Function - Improved the logout to properly clear all session state keys
+SQL Query Date Filtering - Fixed date comparison in SQL queries to use proper date strings
+The code should now run without errors. The main improvements ensure:
+
+No more KeyError exceptions
+Proper date handling throughout the app
+Better database error handling
+Smoother state management during navigation
+Test the app and let me know if you encounter any other issues!
+
+File "/mount/src/catalog-digital/Project.py", line 624
+                  st.download_button(
+                                    ^
+SyntaxError: '(' was never closed
+
+21:24
+Catalog Digital - Bug Fixes
+Code ∙ Version 2 
+
+
+Want to be notified when Claude responds?
+
+
+
+Claude is AI and can make mistakes. Please double-check responses.
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -104,7 +153,6 @@ PROFESORI = {
 }
 
 ELEVI = {
-    # Clasa 6B
     "Albert": "Albert2026#",
     "Alexandru": "Alexandru2026#",
     "Alissa": "Alissa2026#",
@@ -130,15 +178,12 @@ ELEVI = {
     "Rares Andro": "RaresA2026#",
     "Rares Volintiru": "RaresV2026#",
     "Yanis": "Yanis2026#",
-    # Clasa 7A
     "Ionescu Maria": "IonescuM2026#",
     "Popescu Dan": "PopescuD2026#"
 }
 
-# 4. Parola directoare
 PAROLA_DIRECTOARE = hashlib.sha256("Directoare2026@".encode()).hexdigest()
 
-# 5. Materii gimnaziu
 MATERII_GIMNAZIU = [
     "Limba și literatura română", "Matematică", "Limba engleză", "Limba franceză",
     "Limba germană", "Istorie", "Geografie", "Biologie", "Fizică", "Chimie",
@@ -146,7 +191,6 @@ MATERII_GIMNAZIU = [
     "Educație tehnologică", "Informatică și TIC", "Religie", "Consiliere și orientare"
 ]
 
-# 6. Initializare Baza de Date
 @st.cache_resource
 def init_db():
     conn = sqlite3.connect('catalog_2026.db', check_same_thread=False)
@@ -191,9 +235,7 @@ def init_db():
     conn.commit()
     return conn
 
-# 7. Funcții utilitare
 def verify_password(password, role, username=None):
-    """Verifică parola pentru diferite roluri"""
     if role == "teacher" and username:
         return PROFESORI.get(username, {}).get("parola_hash") == hashlib.sha256(password.encode()).hexdigest()
     elif role == "parent" and username:
@@ -203,71 +245,46 @@ def verify_password(password, role, username=None):
     return False
 
 def elev_are_absenta(data_str, nume_elev, materie, conn):
-    """Verifică dacă elevul are absență"""
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT 1 FROM absente 
-        WHERE data = ? AND nume = ? AND materie = ?
-    ''', (data_str, nume_elev, materie))
+    cursor.execute('SELECT 1 FROM absente WHERE data = ? AND nume = ? AND materie = ?', 
+                   (data_str, nume_elev, materie))
     return cursor.fetchone() is not None
 
 def get_note_elev(data_str, nume_elev, materie, conn):
-    """Obține notele unui elev"""
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT id, nota FROM grades 
-        WHERE data = ? AND nume = ? AND materie = ?
-    ''', (data_str, nume_elev, materie))
+    cursor.execute('SELECT id, nota FROM grades WHERE data = ? AND nume = ? AND materie = ?', 
+                   (data_str, nume_elev, materie))
     return cursor.fetchall()
 
 def delete_nota(nota_id, conn):
-    """Șterge o notă după ID"""
     conn.execute("DELETE FROM grades WHERE id = ?", (nota_id,))
     conn.commit()
 
 def update_nota(nota_id, noua_nota, conn):
-    """Modifică o notă existentă"""
     conn.execute("UPDATE grades SET nota = ? WHERE id = ?", (noua_nota, nota_id))
     conn.commit()
 
 def get_media_elev(nume_elev, materie, conn):
-    """Calculează media unui elev la o materie"""
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT AVG(nota) FROM grades 
-        WHERE nume = ? AND materie = ?
-    ''', (nume_elev, materie))
-    result = cursor.fetchone()
-    return round(result[0], 2) if result and result[0] else 0.00
-
-def get_media_clasa(clasa, materie, conn):
-    """Calculează media clasei la o materie"""
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT AVG(nota) FROM grades 
-        WHERE clasa = ? AND materie = ?
-    ''', (clasa, materie))
+    cursor.execute('SELECT AVG(nota) FROM grades WHERE nume = ? AND materie = ?', 
+                   (nume_elev, materie))
     result = cursor.fetchone()
     return round(result[0], 2) if result and result[0] else 0.00
 
 def init_purtare(conn):
-    """Initializează notele de purtare"""
     cursor = conn.cursor()
     for elev in ELEVI.keys():
         cursor.execute("INSERT OR IGNORE INTO purtare (nume, nota) VALUES (?, ?)", (elev, 10))
     conn.commit()
 
-# 8. Setup baza de date
 conn = init_db()
 init_purtare(conn)
 
-# 9. Clasele
 CLASE = {
     "6B": [e for e in ELEVI.keys() if e not in ["Ionescu Maria", "Popescu Dan"]],
     "7A": ["Ionescu Maria", "Popescu Dan"]
 }
 
-# 10. Session state - FIX: Added missing initialization
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'role' not in st.session_state:
@@ -283,9 +300,7 @@ if 'clasa_selectata' not in st.session_state:
 if 'selected_date' not in st.session_state:
     st.session_state.selected_date = datetime.now().strftime("%Y-%m-%d")
 
-# 11. Funcție pentru afișare selecție curentă
 def display_current_selection():
-    """Afișează selecția curentă"""
     if st.session_state.role == "teacher":
         st.markdown(f"""
         <div class="current-selection">
@@ -304,11 +319,9 @@ def display_current_selection():
         </div>
         """, unsafe_allow_html=True)
 
-# ============================================
-# PAGINA DE LOGIN
-# ============================================
+# LOGIN PAGE
 if not st.session_state.logged_in:
-    st.markdown(f"""
+    st.markdown("""
     <div style="text-align: center; padding: 30px 0;">
         <h1 style="color: white; font-size: 2.5rem;">🎓 Catalog Digital 2026</h1>
         <p style="color: #94a3b8; font-size: 1.2rem;">Anul școlar 2025-2026</p>
@@ -334,11 +347,7 @@ if not st.session_state.logged_in:
     
     with tab_prof:
         st.subheader("Autentificare Profesor")
-        profesor_selectat = st.selectbox(
-            "Selectează numele tău",
-            list(PROFESORI.keys()),
-            key="login_profesor"
-        )
+        profesor_selectat = st.selectbox("Selectează numele tău", list(PROFESORI.keys()), key="login_profesor")
         parola = st.text_input("Introdu parola ta", type="password", key="parola_prof")
         
         if st.button("Accesează platforma", type="primary", use_container_width=True):
@@ -359,15 +368,9 @@ if not st.session_state.logged_in:
             for student in studenti:
                 all_students.append(f"{student} ({clasa})")
         
-        elev_selectat = st.selectbox(
-            "Selectează elevul",
-            sorted(all_students),
-            key="login_elev"
-        )
-        
+        elev_selectat = st.selectbox("Selectează elevul", sorted(all_students), key="login_elev")
         nume_elev = elev_selectat.split(" (")[0]
         clasa_elev = elev_selectat.split(" (")[1].replace(")", "")
-        
         parola_parinte = st.text_input("Parolă elev/părinte", type="password", key="parola_parinte")
         
         if st.button("Vezi situația elevului", type="primary", use_container_width=True):
@@ -394,9 +397,7 @@ if not st.session_state.logged_in:
             else:
                 st.error("Cod incorect!")
 
-# ============================================
-# PAGINA PRINCIPALĂ
-# ============================================
+# MAIN PAGE
 else:
     col_title, col_logout = st.columns([4, 1])
     
@@ -406,7 +407,7 @@ else:
         elif st.session_state.role == "parent":
             st.markdown(f"<h2>👪 Părinte - {st.session_state.nume_elev}</h2>", unsafe_allow_html=True)
         else:
-            st.markdown(f"<h2>🏛️ Panou Directoare</h2>", unsafe_allow_html=True)
+            st.markdown("<h2>🏛️ Panou Directoare</h2>", unsafe_allow_html=True)
     
     with col_logout:
         if st.button("🚪 Deconectare", type="secondary"):
@@ -416,9 +417,7 @@ else:
     
     display_current_selection()
     
-    # ============================================
-    # INTERFAȚA PROFESOR
-    # ============================================
+    # TEACHER INTERFACE
     if st.session_state.role == "teacher":
         st.markdown("---")
         menu_options = ["📝 Adaugă note/absente", "📊 Vezi note existente", "✏️ Modifică/șterge note"]
@@ -432,7 +431,6 @@ else:
         col_cal1, col_cal2 = st.columns([2, 1])
         
         with col_cal1:
-            # FIX: Convert string to date object for date_input
             current_date = datetime.strptime(st.session_state.selected_date, "%Y-%m-%d").date()
             selected_date = st.date_input(
                 "Alege data",
@@ -453,7 +451,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
         
-        # Săptămâna curentă
         st.markdown("#### 📅 Săptămâna curentă")
         today = date.today()
         start_of_week = today - timedelta(days=today.weekday())
@@ -484,16 +481,12 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if st.button(f"✓", key=f"quick_select_{i}", help=f"Selectează {day_date.strftime('%d.%m')}"):
+                if st.button("✓", key=f"quick_select_{i}", help=f"Selectează {day_date.strftime('%d.%m')}"):
                     st.session_state.selected_date = day_date.strftime("%Y-%m-%d")
                     st.rerun()
         
         search_query = st.text_input("🔍 Caută elev...", key="search_elev")
-        
-        if search_query:
-            elevi_filtrati = [e for e in CLASE[clasa] if search_query.lower() in e.lower()]
-        else:
-            elevi_filtrati = CLASE[clasa]
+        elevi_filtrati = [e for e in CLASE[clasa] if search_query.lower() in e.lower()] if search_query else CLASE[clasa]
         
         st.markdown(f"### 👥 Elevi - {len(elevi_filtrati)} total")
         
@@ -507,10 +500,8 @@ else:
                         st.markdown("**Nu se poate adăuga notă când elevul este absent!**")
                         
                         if st.button(f"🗑️ Șterge absența", key=f"del_abs_{elev}", type="secondary"):
-                            conn.execute('''
-                                DELETE FROM absente 
-                                WHERE data = ? AND nume = ? AND materie = ?
-                            ''', (data_str, elev, st.session_state.materie))
+                            conn.execute('DELETE FROM absente WHERE data = ? AND nume = ? AND materie = ?',
+                                       (data_str, elev, st.session_state.materie))
                             conn.commit()
                             st.success(f"Absența pentru {elev} a fost ștearsă!")
                             st.rerun()
@@ -538,14 +529,12 @@ else:
                             col_nota, col_abs = st.columns(2)
                             
                             with col_nota:
-                                nota_noua = st.number_input("Notă", 1.0, 10.0, 8.0, 0.5, 
-                                                          key=f"nota_{elev}")
+                                nota_noua = st.number_input("Notă", 1.0, 10.0, 8.0, 0.5, key=f"nota_{elev}")
                                 if st.button("📝 Adaugă notă", key=f"add_nota_{elev}"):
                                     try:
-                                        conn.execute('''
-                                            INSERT INTO grades (data, clasa, nume, materie, nota, profesor) 
-                                            VALUES (?, ?, ?, ?, ?, ?)
-                                        ''', (data_str, clasa, elev, st.session_state.materie, nota_noua, st.session_state.username))
+                                        conn.execute('''INSERT INTO grades (data, clasa, nume, materie, nota, profesor) 
+                                                       VALUES (?, ?, ?, ?, ?, ?)''',
+                                                    (data_str, clasa, elev, st.session_state.materie, nota_noua, st.session_state.username))
                                         conn.commit()
                                         st.success(f"Nota {nota_noua} adăugată pentru {elev}!")
                                         st.rerun()
@@ -555,10 +544,8 @@ else:
                             with col_abs:
                                 if st.button("❌ Marchează absent", key=f"abs_{elev}", type="secondary"):
                                     try:
-                                        conn.execute('''
-                                            INSERT INTO absente (data, clasa, nume, materie) 
-                                            VALUES (?, ?, ?, ?)
-                                        ''', (data_str, clasa, elev, st.session_state.materie))
+                                        conn.execute('INSERT INTO absente (data, clasa, nume, materie) VALUES (?, ?, ?, ?)',
+                                                    (data_str, clasa, elev, st.session_state.materie))
                                         conn.commit()
                                         st.warning(f"{elev} marcat absent!")
                                         st.rerun()
@@ -570,17 +557,11 @@ else:
             
             col_filtru1, col_filtru2 = st.columns(2)
             with col_filtru1:
-                filtru_data = st.selectbox(
-                    "Filtrează după dată",
+                filtru_data = st.selectbox("Filtrează după dată",
                     ["Toate datele", "Azi", "Ultima săptămână", "Ultima lună", "Data specifică"],
-                    key="filtru_data"
-                )
+                    key="filtru_data")
             
-            query = '''
-                SELECT data, nume, nota 
-                FROM grades 
-                WHERE clasa = ? AND materie = ?
-            '''
+            query = 'SELECT data, nume, nota FROM grades WHERE clasa = ? AND materie = ?'
             params = [clasa, st.session_state.materie]
             
             if filtru_data == "Azi":
@@ -599,7 +580,6 @@ else:
                     params.append(specific_date.strftime("%Y-%m-%d"))
             
             query += " ORDER BY data DESC, nume"
-            
             note_df = pd.read_sql(query, conn, params=params)
             
             if not note_df.empty:
@@ -607,16 +587,11 @@ else:
                 
                 col_stat1, col_stat2, col_stat3 = st.columns(3)
                 with col_stat1:
-                    media_clasei = note_df['nota'].mean()
-                    st.metric("📊 Media clasei", f"{media_clasei:.2f}")
-                
+                    st.metric("📊 Media clasei", f"{note_df['nota'].mean():.2f}")
                 with col_stat2:
-                    nota_max = note_df['nota'].max()
-                    st.metric("🏆 Nota maximă", f"{nota_max:.2f}")
-                
+                    st.metric("🏆 Nota maximă", f"{note_df['nota'].max():.2f}")
                 with col_stat3:
-                    nota_min = note_df['nota'].min()
-                    st.metric("📉 Nota minimă", f"{nota_min:.2f}")
+                    st.metric("📉 Nota minimă", f"{note_df['nota'].min():.2f}")
                 
                 st.dataframe(note_df, use_container_width=True, hide_index=True, height=400)
                 
@@ -625,4 +600,47 @@ else:
                     label="📥 Exportă notele",
                     data=csv,
                     file_name=f"note_{clasa}_{st.session_state.materie}_{datetime.now().strftime('%Y%m%d')}.csv",
-                    mime
+                    mime="text/csv"
+                )
+            else:
+                st.info("Nu există note înregistrate pentru această clasă și materie.")
+        
+        elif selected_menu == "✏️ Modifică/șterge note":
+            st.markdown("### ✏️ Management note existente")
+            
+            col_search1, col_search2 = st.columns(2)
+            with col_search1:
+                search_elev = st.selectbox("Caută după elev", [""] + CLASE[clasa], key="search_note_elev")
+            with col_search2:
+                search_date = st.date_input("Caută după dată", value=None, key="search_note_date")
+            
+            query = 'SELECT id, data, nume, nota FROM grades WHERE clasa = ? AND materie = ?'
+            params = [clasa, st.session_state.materie]
+            
+            if search_elev:
+                query += " AND nume = ?"
+                params.append(search_elev)
+            if search_date:
+                query += " AND data = ?"
+                params.append(search_date.strftime("%Y-%m-%d"))
+            
+            query += " ORDER BY data DESC"
+            note_to_edit = pd.read_sql(query, conn, params=params)
+            
+            if not note_to_edit.empty:
+                st.markdown(f"**Găsite {len(note_to_edit)} note:**")
+                
+                for _, row in note_to_edit.iterrows():
+                    col_edit1, col_edit2, col_edit3, col_edit4 = st.columns([2, 1, 1, 1])
+                    
+                    with col_edit1:
+                        st.write(f"**{row['nume']}** - {row['data']}")
+                    with col_edit2:
+                        st.metric("Nota", row['nota'], label_visibility="collapsed")
+                    with col_edit3:
+                        nota_noua = st.number_input("Noua notă", 1.0, 10.0, float(row['nota']), 0.5, 
+                                                   key=f"edit_{row['id']}")
+                    with col_edit4:
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn
+
