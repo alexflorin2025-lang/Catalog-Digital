@@ -4,428 +4,552 @@ import pandas as pd
 from datetime import datetime
 import hashlib
 
-# 1. Configurare Pagina minimală
+# 1. Configurare Pagina universală
 st.set_page_config(
-    page_title="Catalog", 
+    page_title="Catalog Digital", 
     page_icon="🎓", 
-    layout="wide",
-    initial_sidebar_state="collapsed",
-    menu_items=None
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
-# 2. CSS ULTRA COMPACT pentru Nokia G21
+# 2. CSS responsive pentru toate dispozitivele
 st.markdown("""
-<style>
-/* RESET COMPLET - FARA MARGINI */
-* {
-    margin: 0 !important;
-    padding: 0 !important;
-}
+    <style>
+    /* RESET pentru compatibilitate */
+    * {
+        box-sizing: border-box;
+    }
+    
+    /* Fundal universal */
+    .stApp {
+        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        min-height: 100vh !important;
+    }
+    
+    /* Ascunde elementele inutile */
+    footer, #MainMenu, header {
+        visibility: hidden !important;
+    }
+    
+    /* Header responsive */
+    h1, h2, h3 {
+        color: white !important;
+        text-align: center !important;
+        margin: 10px 0 !important;
+    }
+    
+    /* Container principal */
+    .main-container {
+        max-width: 100% !important;
+        padding: 10px !important;
+    }
+    
+    /* Butoane responsive */
+    .stButton > button {
+        width: 100% !important;
+        margin: 5px 0 !important;
+        border-radius: 8px !important;
+        font-weight: bold !important;
+    }
+    
+    /* Input-uri responsive */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 6px !important;
+    }
+    
+    /* Expander responsive */
+    .stExpander {
+        margin: 5px 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Tabs responsive */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 5px !important;
+    }
+    
+    /* Media queries pentru diferite dispozitive */
+    @media (max-width: 768px) {
+        /* Mobile optimizations */
+        h1 { font-size: 1.5rem !important; }
+        h2 { font-size: 1.2rem !important; }
+        h3 { font-size: 1rem !important; }
+        
+        .stButton > button {
+            height: 40px !important;
+            font-size: 0.9rem !important;
+        }
+        
+        .streamlit-expanderHeader {
+            font-size: 0.9rem !important;
+            padding: 8px 12px !important;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        /* Desktop optimizations */
+        .main-container {
+            max-width: 800px !important;
+            margin: 0 auto !important;
+        }
+    }
+    
+    /* Mesaje de eroare/success */
+    .stAlert {
+        border-radius: 8px !important;
+        margin: 10px 0 !important;
+    }
+    
+    /* Deconectare fixată */
+    .logout-btn {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        z-index: 1000 !important;
+        width: auto !important;
+    }
+    
+    </style>
+    """, unsafe_allow_html=True)
 
-html, body, [data-testid="stAppViewContainer"] {
-    height: 100vh !important;
-    overflow: hidden !important;
-    background: #000 !important;
-}
-
-.stApp {
-    background: #000 !important;
-    padding: 2px !important;
-    height: 100vh !important;
-}
-
-/* ASCUNDE TOT CE NU E NECESAR */
-footer, #MainMenu, .stDeployButton, header {
-    display: none !important;
-}
-
-/* HEADER MIC */
-h1, h2, h3 {
-    margin: 2px 0 !important;
-    font-size: 1rem !important;
-    text-align: center !important;
-    color: white !important;
-}
-
-/* DECONECTARE MICĂ SUS */
-.deconectare-btn {
-    position: fixed;
-    top: 2px;
-    right: 2px;
-    z-index: 9999;
-    width: 40px !important;
-    height: 30px !important;
-    padding: 0 !important;
-}
-
-/* TABS FOARTE MICI */
-.stTabs [data-baseweb="tab-list"] {
-    gap: 1px !important;
-    padding: 1px !important;
-}
-
-.stTabs [data-baseweb="tab"] {
-    padding: 2px 4px !important;
-    font-size: 0.7rem !important;
-    min-width: 60px !important;
-}
-
-/* BUTOANE MINI */
-div.stButton > button {
-    height: 28px !important;
-    font-size: 0.7rem !important;
-    margin: 1px !important;
-    padding: 0 4px !important;
-    border-radius: 4px !important;
-}
-
-/* EXPANDER MIC - DOAR 1 LINIE CAND E INCHIS */
-.stExpander {
-    margin: 1px 0 !important;
-    border: 1px solid #333 !important;
-}
-
-.streamlit-expanderHeader {
-    padding: 2px 4px !important;
-    font-size: 0.75rem !important;
-    height: 28px !important;
-    min-height: 28px !important;
-}
-
-.streamlit-expanderContent {
-    padding: 3px !important;
-    font-size: 0.7rem !important;
-}
-
-/* INPUT-URI FOARTE MICI */
-.stNumberInput input {
-    height: 28px !important;
-    padding: 0 4px !important;
-    font-size: 0.8rem !important;
-}
-
-.stTextInput input, .stSelectbox div {
-    height: 28px !important;
-    font-size: 0.8rem !important;
-    padding: 0 4px !important;
-}
-
-/* TEXTAREA MICĂ */
-textarea {
-    height: 40px !important;
-    font-size: 0.75rem !important;
-    padding: 2px !important;
-    margin: 2px 0 !important;
-}
-
-/* CONTAINER PRINCIPAL CU SCROLL LIMITAT */
-.main-container {
-    height: calc(100vh - 60px) !important;
-    overflow-y: auto !important;
-    padding: 2px !important;
-}
-
-/* COLUMN FARA SPATIU */
-[data-testid="column"] {
-    padding: 0 1px !important;
-}
-
-/* SCROLLBAR INVISIBIL */
-::-webkit-scrollbar {
-    width: 3px !important;
-}
-
-/* CARD COMPACT */
-.compact-card {
-    background: rgba(20, 30, 40, 0.9);
-    border-radius: 6px;
-    padding: 4px;
-    margin: 2px 0;
-    border: 1px solid #444;
-}
-
-/* INFO MIC */
-.stMetric {
-    padding: 2px !important;
-}
-
-.stMetric label {
-    font-size: 0.7rem !important;
-}
-
-.stMetric div {
-    font-size: 0.9rem !important;
-}
-
-/* ASCUNDE LABELE CAND E POSIBIL */
-[data-testid="stWidgetLabel"] p {
-    font-size: 0.7rem !important;
-    margin-bottom: 1px !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-# 3. Parole simple (hash pentru siguranta)
+# 3. Parole FIXATE - versiunea simplă care sigur merge
 PASSWORDS = {
-    "teacher": hashlib.sha256("123".encode()).hexdigest(),
-    "parent": hashlib.sha256("1234".encode()).hexdigest(),
-    "admin": hashlib.sha256("admin".encode()).hexdigest()
+    "teacher": "123",
+    "parent": "1234", 
+    "admin": "admin"
 }
 
-# 4. Baza de date - SUPER SIMPLA
+# 4. Initializare Baza de Date - versiune simplă
 def init_db():
-    conn = sqlite3.connect('catalog.db', check_same_thread=False)
+    conn = sqlite3.connect('catalog_app.db', check_same_thread=False)
     c = conn.cursor()
     
     c.execute('''CREATE TABLE IF NOT EXISTS grades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dt TEXT, 
-        name TEXT, 
-        sub TEXT, 
-        val INT
+        data TEXT,
+        clasa TEXT,
+        nume TEXT,
+        materie TEXT,
+        nota INTEGER
     )''')
     
-    c.execute('''CREATE TABLE IF NOT EXISTS absences (
+    c.execute('''CREATE TABLE IF NOT EXISTS absente (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dt TEXT, 
-        name TEXT
+        data TEXT,
+        clasa TEXT,
+        nume TEXT
     )''')
     
-    c.execute('''CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        dt TEXT, 
-        name TEXT, 
-        sub TEXT, 
-        msg TEXT
+    c.execute('''CREATE TABLE IF NOT EXISTS observatii (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        data TEXT,
+        nume TEXT,
+        materie TEXT,
+        observatie TEXT
+    )''')
+    
+    c.execute('''CREATE TABLE IF NOT EXISTS purtare (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nume TEXT UNIQUE,
+        nota INTEGER DEFAULT 10
     )''')
     
     conn.commit()
     return conn
 
-# 5. Funcții rapide
-def verify_password(password, role):
-    return hashlib.sha256(password.encode()).hexdigest() == PASSWORDS[role]
+# 5. Funcții utilitare SIMPLE
+def check_password(password, role):
+    """Verifică parola direct - fără hash pentru simplitate"""
+    return password == PASSWORDS[role]
 
-# 6. Setup
+def get_purtare(nume, conn):
+    """Obține nota de purtare"""
+    cursor = conn.cursor()
+    cursor.execute("SELECT nota FROM purtare WHERE nume = ?", (nume,))
+    result = cursor.fetchone()
+    return result[0] if result else 10
+
+def init_purtare(conn, elevi):
+    """Initializează notele de purtare"""
+    cursor = conn.cursor()
+    for elev in elevi:
+        cursor.execute("INSERT OR IGNORE INTO purtare (nume, nota) VALUES (?, ?)", (elev, 10))
+    conn.commit()
+
+# 6. Setup baza de date
 conn = init_db()
 
-# Elevi - DOAR NUME, FARA CLASE COMPLICATE
-ELEVI_6B = ["Albert", "Alex", "Alissa", "Andrei G", "Andrei C", "Ayan", 
-           "Beatrice", "Bianca", "Bogdan", "David", "Eduard", "Erika", 
-           "Giulia", "Ines", "Karina", "Luca", "Mara", "Maria", 
-           "Marius", "Mihnea", "Natalia", "Raisa", "Rares A", "Rares V", "Yanis"]
+# Datele aplicației
+CLASE = {
+    "6B": ["Albert", "Alexandru", "Alissa", "Andrei G.", "Andrei C.", "Ayan", 
+           "Beatrice", "Bianca", "Bogdan", "David Costea", "Eduard", "Erika", 
+           "Giulia", "Ines", "Karina", "Luca", "Mara", "Maria", "Marius", 
+           "Mihnea", "Natalia", "Raisa", "Rares Andro", "Rares Volintiru", "Yanis"],
+    "7A": ["Ionescu Maria", "Popescu Dan"]
+}
 
-# 7. State minimal
+# Inițializează purtarea pentru toți elevii
+all_students = []
+for studenti in CLASE.values():
+    all_students.extend(studenti)
+init_purtare(conn, all_students)
+
+# 7. Inițializare session state
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.role = None
+    st.session_state.materie = None
+    st.session_state.nume_elev = None
+    st.session_state.clasa_selectata = "6B"
 
-# === LOGIN SCREEN SUPER COMPACT ===
+# ============================================
+# PAGINA DE LOGIN
+# ============================================
 if not st.session_state.logged_in:
-    st.markdown("<h3>🎓 Catalog</h3>", unsafe_allow_html=True)
+    st.markdown("<h1>🎓 Catalog Digital</h1>", unsafe_allow_html=True)
     
-    tab1, tab2, tab3 = st.tabs(["Prof", "Par", "Dir"])
+    # Tabs pentru diferite roluri
+    tab_prof, tab_parinte, tab_directoare = st.tabs(["Profesor", "Părinte", "Directoare"])
     
-    with tab1:
-        materia = st.selectbox("Materia", ["Info", "Mate", "Rom"], key="m", label_visibility="collapsed")
-        passw = st.text_input("Parola", type="password", key="p1", label_visibility="collapsed")
-        if st.button("Intră", key="b1", use_container_width=True):
-            if verify_password(passw, "teacher"):
-                st.session_state.update(logged_in=True, role="teacher", materia=materia)
+    with tab_prof:
+        st.subheader("Autentificare Profesor")
+        
+        # Selectare materie
+        materie = st.selectbox(
+            "Selectează materia",
+            ["Informatică", "Matematică", "Română"],
+            key="login_materie"
+        )
+        
+        # Parolă
+        parola = st.text_input("Parolă", type="password", key="parola_prof")
+        
+        # Buton login
+        if st.button("Accesează ca Profesor", type="primary", use_container_width=True):
+            if parola and check_password(parola, "teacher"):
+                st.session_state.logged_in = True
+                st.session_state.role = "teacher"
+                st.session_state.materie = materie
+                st.success("Autentificare reușită!")
                 st.rerun()
+            else:
+                st.error("Parolă incorectă! Încearcă '123'")
     
-    with tab2:
-        elev = st.selectbox("Elev", ELEVI_6B, key="e", label_visibility="collapsed")
-        passw = st.text_input("Parola", type="password", key="p2", label_visibility="collapsed")
-        if st.button("Intră", key="b2", use_container_width=True):
-            if verify_password(passw, "parent"):
-                st.session_state.update(logged_in=True, role="parent", nume_elev=elev)
+    with tab_parinte:
+        st.subheader("Autentificare Părinte")
+        
+        # Selectare elev
+        elev_selectat = st.selectbox(
+            "Selectează elevul",
+            sorted(all_students),
+            key="login_elev"
+        )
+        
+        # Parolă
+        parola_parinte = st.text_input("Parolă părinte", type="password", key="parola_parinte")
+        
+        # Buton login
+        if st.button("Accesează ca Părinte", type="primary", use_container_width=True):
+            if parola_parinte and check_password(parola_parinte, "parent"):
+                st.session_state.logged_in = True
+                st.session_state.role = "parent"
+                st.session_state.nume_elev = elev_selectat
+                st.success("Autentificare reușită!")
                 st.rerun()
+            else:
+                st.error("Parolă incorectă! Încearcă '1234'")
     
-    with tab3:
-        passw = st.text_input("Cod", type="password", key="p3", label_visibility="collapsed")
-        if st.button("Intră", key="b3", use_container_width=True):
-            if verify_password(passw, "admin"):
-                st.session_state.update(logged_in=True, role="admin")
+    with tab_directoare:
+        st.subheader("Autentificare Directoare")
+        
+        # Parolă admin
+        parola_admin = st.text_input("Cod de acces", type="password", key="parola_admin")
+        
+        # Buton login
+        if st.button("Accesează ca Directoare", type="primary", use_container_width=True):
+            if parola_admin and check_password(parola_admin, "admin"):
+                st.session_state.logged_in = True
+                st.session_state.role = "admin"
+                st.success("Autentificare reușită!")
                 st.rerun()
+            else:
+                st.error("Cod incorect! Încearcă 'admin'")
 
+# ============================================
+# PAGINA PRINCIPALĂ (După login)
+# ============================================
 else:
-    # === BUTON DECONECTARE MIC ===
-    st.markdown('<div class="deconectare-btn">', unsafe_allow_html=True)
-    if st.button("❌", help="Ieși", key="exit"):
+    # Buton de deconectare
+    st.markdown('<div class="logout-btn">', unsafe_allow_html=True)
+    if st.button("🚪 Deconectare", type="secondary"):
         st.session_state.clear()
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Spacing pentru buton
-    st.markdown("<div style='height: 30px'></div>", unsafe_allow_html=True)
-    
-    # === CONTAINER PRINCIPAL ===
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # === PROFESOR - INTERFAȚĂ TABELARĂ COMPACTĂ ===
+    # ============================================
+    # INTERFAȚA PROFESOR
+    # ============================================
     if st.session_state.role == "teacher":
-        st.markdown(f"**{st.session_state.materia}**")
+        st.markdown(f"<h2>👨‍🏫 Profesor - {st.session_state.materie}</h2>", unsafe_allow_html=True)
         
-        # CĂUTARE RAPIDĂ
-        search = st.text_input("🔍", placeholder="Nume elev", key="search", label_visibility="collapsed")
+        # Selectare clasă
+        clasa = st.selectbox("Selectează clasa", list(CLASE.keys()), key="prof_clasa")
+        st.session_state.clasa_selectata = clasa
         
-        # FILTRU ELEVI
-        if search:
-            elev_list = [e for e in ELEVI_6B if search.lower() in e.lower()]
+        # Statistici rapide
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            today = datetime.now().strftime("%Y-%m-%d")
+            note_azi = pd.read_sql(
+                f"SELECT COUNT(*) FROM grades WHERE data = '{today}' AND materie = ?",
+                conn, params=[st.session_state.materie]
+            ).iloc[0,0]
+            st.metric("📝 Note azi", note_azi)
+        
+        with col2:
+            abs_azi = pd.read_sql(
+                f"SELECT COUNT(*) FROM absente WHERE data = '{today}'",
+                conn
+            ).iloc[0,0]
+            st.metric("❌ Absențe azi", abs_azi)
+        
+        with col3:
+            elev_count = len(CLASE[clasa])
+            st.metric("👥 Elevi", elev_count)
+        
+        st.markdown("---")
+        
+        # Lista elevilor cu acțiuni
+        st.markdown(f"### Elevi - Clasa {clasa}")
+        
+        # Opțiune de căutare
+        search_query = st.text_input("🔍 Caută elev...", key="search_elev")
+        
+        # Filtrare elevi
+        if search_query:
+            elevi_filtrati = [e for e in CLASE[clasa] if search_query.lower() in e.lower()]
         else:
-            elev_list = ELEVI_6B
+            elevi_filtrati = CLASE[clasa]
         
-        # DOAR 8 ELEVI PE PAGINĂ
-        PAGE_SIZE = 8
-        total_pages = (len(elev_list) + PAGE_SIZE - 1) // PAGE_SIZE
-        
-        if total_pages > 1:
-            page = st.selectbox("Pag", list(range(total_pages)), 
-                              format_func=lambda x: f"{x+1}", key="page")
-        else:
-            page = 0
-        
-        start_idx = page * PAGE_SIZE
-        current_elev = elev_list[start_idx:start_idx + PAGE_SIZE]
-        
-        # TABEL COMPACT
-        for elev in current_elev:
-            with st.expander(elev[:12], expanded=False):
-                # LINIE 1: NOTĂ
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    nota = st.number_input("Nota", 1, 10, 10, key=f"n_{elev}", label_visibility="collapsed")
-                with col2:
-                    if st.button("✓", key=f"add_{elev}"):
-                        conn.execute("INSERT INTO grades (dt, name, sub, val) VALUES (?,?,?,?)",
-                                   (datetime.now().strftime("%d/%m"), elev, st.session_state.materia, nota))
-                        conn.commit()
-                        st.rerun()
-                
-                # LINIE 2: ACTIUNI RAPIDE
+        for elev in elevi_filtrati:
+            with st.expander(f"👤 {elev}", expanded=False):
                 col_a, col_b = st.columns(2)
+                
                 with col_a:
-                    if st.button("❌ Abs", key=f"abs_{elev}", use_container_width=True):
-                        conn.execute("INSERT INTO absences (dt, name) VALUES (?,?)",
-                                   (datetime.now().strftime("%d/%m"), elev))
+                    # Adăugare notă
+                    nota_noua = st.number_input("Notă", 1, 10, 10, key=f"nota_{elev}")
+                    if st.button("Adaugă Nota", key=f"btn_nota_{elev}", use_container_width=True):
+                        data_curenta = datetime.now().strftime("%Y-%m-%d %H:%M")
+                        conn.execute(
+                            "INSERT INTO grades (data, clasa, nume, materie, nota) VALUES (?, ?, ?, ?, ?)",
+                            (data_curenta, clasa, elev, st.session_state.materie, nota_noua)
+                        )
                         conn.commit()
+                        st.success(f"Nota {nota_noua} adăugată pentru {elev}!")
                         st.rerun()
                 
                 with col_b:
-                    obs = st.text_input("Obs", key=f"obs_{elev}", placeholder="scrie...", label_visibility="collapsed")
-                    if obs and st.button("📩", key=f"msg_{elev}"):
-                        conn.execute("INSERT INTO messages (dt, name, sub, msg) VALUES (?,?,?,?)",
-                                   (datetime.now().strftime("%d/%m"), elev, st.session_state.materia, obs))
+                    # Marcare absent
+                    if st.button("Marchează Absent", key=f"btn_absent_{elev}", use_container_width=True):
+                        data_curenta = datetime.now().strftime("%Y-%m-%d")
+                        conn.execute(
+                            "INSERT INTO absente (data, clasa, nume) VALUES (?, ?, ?)",
+                            (data_curenta, clasa, elev)
+                        )
                         conn.commit()
+                        st.warning(f"{elev} marcat absent!")
                         st.rerun()
-        
-        # STATISTICI JOS
-        st.markdown("---")
-        col_s1, col_s2 = st.columns(2)
-        with col_s1:
-            note_azi = pd.read_sql(f"""
-                SELECT COUNT(*) FROM grades 
-                WHERE sub='{st.session_state.materia}' AND dt=date('now')
-            """, conn).iloc[0,0]
-            st.metric("Note azi", note_azi)
-        
-        with col_s2:
-            abs_azi = pd.read_sql("SELECT COUNT(*) FROM absences WHERE dt=date('now')", conn).iloc[0,0]
-            st.metric("Abs azi", abs_azi)
+                
+                # Adăugare observație
+                observatie = st.text_area("Observație", key=f"obs_{elev}", placeholder="Scrie observația aici...")
+                if st.button("Trimite Observație", key=f"btn_obs_{elev}", use_container_width=True):
+                    if observatie.strip():
+                        data_curenta = datetime.now().strftime("%Y-%m-%d")
+                        conn.execute(
+                            "INSERT INTO observatii (data, nume, materie, observatie) VALUES (?, ?, ?, ?)",
+                            (data_curenta, elev, st.session_state.materie, observatie.strip())
+                        )
+                        conn.commit()
+                        st.info(f"Observație trimisă pentru {elev}!")
+                        st.rerun()
+                    else:
+                        st.error("Te rog scrie o observație!")
     
-    # === PĂRINTE - DOAR 3 TAB-URI MICI ===
+    # ============================================
+    # INTERFAȚA PĂRINTE
+    # ============================================
     elif st.session_state.role == "parent":
         elev = st.session_state.nume_elev
+        st.markdown(f"<h2>👪 Părinte - {elev}</h2>", unsafe_allow_html=True)
         
-        # TABS MICI
-        t1, t2, t3 = st.tabs(["Note", "Abs", "Obs"])
+        # Statistici rapide
+        col_p1, col_p2, col_p3 = st.columns(3)
         
-        with t1:
-            # NOTE RECENTE (max 5)
-            notes = pd.read_sql(f"""
-                SELECT sub, val, dt FROM grades 
-                WHERE name='{elev}' 
-                ORDER BY dt DESC LIMIT 5
-            """, conn)
+        with col_p1:
+            note_total = pd.read_sql(
+                "SELECT COUNT(*) FROM grades WHERE nume = ?",
+                conn, params=[elev]
+            ).iloc[0,0]
+            st.metric("📊 Note", note_total)
+        
+        with col_p2:
+            abs_total = pd.read_sql(
+                "SELECT COUNT(*) FROM absente WHERE nume = ?",
+                conn, params=[elev]
+            ).iloc[0,0]
+            st.metric("❌ Absențe", abs_total)
+        
+        with col_p3:
+            nota_purtare = get_purtare(elev, conn)
+            st.metric("⭐ Purtare", f"{nota_purtare}/10")
+        
+        st.markdown("---")
+        
+        # Tabs pentru diferite informații
+        tab_note, tab_absente, tab_observatii = st.tabs(["Note", "Absențe", "Observații"])
+        
+        with tab_note:
+            st.markdown("### Notele elevului")
+            note_df = pd.read_sql(
+                "SELECT data as Data, materie as Materie, nota as Nota FROM grades WHERE nume = ? ORDER BY data DESC",
+                conn, params=[elev]
+            )
             
-            if not notes.empty:
-                for _, row in notes.iterrows():
-                    st.markdown(f"""
-                    <div class='compact-card'>
-                        <strong>{row['sub']}</strong>: {row['val']} 
-                        <small style='float:right'>{row['dt']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
+            if not note_df.empty:
+                st.dataframe(note_df, use_container_width=True, hide_index=True)
+                
+                # Calcul medie pe materii
+                st.markdown("**Medii pe materii:**")
+                medii = note_df.groupby('Materie')['Nota'].mean().round(2)
+                for materie, medie in medii.items():
+                    st.write(f"**{materie}**: {medie}")
             else:
-                st.info("Fără note")
+                st.info("Nu există note înregistrate.")
         
-        with t2:
-            # ABSENȚE RECENTE
-            absente = pd.read_sql(f"""
-                SELECT dt FROM absences 
-                WHERE name='{elev}' 
-                ORDER BY dt DESC LIMIT 5
-            """, conn)
+        with tab_absente:
+            st.markdown("### Absențele elevului")
+            abs_df = pd.read_sql(
+                "SELECT data as Data FROM absente WHERE nume = ? ORDER BY data DESC",
+                conn, params=[elev]
+            )
             
-            if not absente.empty:
-                for date in absente['dt']:
-                    st.markdown(f"• {date}")
+            if not abs_df.empty:
+                st.dataframe(abs_df, use_container_width=True, hide_index=True)
             else:
-                st.success("Fără absențe")
+                st.success("Nu există absențe înregistrate.")
         
-        with t3:
-            # OBSERVAȚII RECENTE
-            obs = pd.read_sql(f"""
-                SELECT sub, msg FROM messages 
-                WHERE name='{elev}' 
-                ORDER BY dt DESC LIMIT 3
-            """, conn)
+        with tab_observatii:
+            st.markdown("### Observații de la profesori")
+            obs_df = pd.read_sql(
+                "SELECT data as Data, materie as Materie, observatie as Observație FROM observatii WHERE nume = ? ORDER BY data DESC",
+                conn, params=[elev]
+            )
             
-            if not obs.empty:
-                for _, row in obs.iterrows():
-                    st.warning(f"**{row['sub']}**: {row['msg'][:40]}...")
+            if not obs_df.empty:
+                for _, row in obs_df.iterrows():
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background-color: rgba(255,75,75,0.1); padding: 10px; border-radius: 8px; margin: 5px 0;">
+                            <strong>{row['Data']} - {row['Materie']}</strong><br>
+                            {row['Observație']}
+                        </div>
+                        """, unsafe_allow_html=True)
             else:
-                st.success("Fără observații")
+                st.success("Nu există observații înregistrate.")
     
-    # === DIRECTOARE - PANOU SIMPLU ===
+    # ============================================
+    # INTERFAȚA DIRECTOARE
+    # ============================================
     elif st.session_state.role == "admin":
-        st.markdown("**Admin**")
+        st.markdown("<h2>🏛️ Panou Directoare</h2>", unsafe_allow_html=True)
         
-        # BUTOANE RAPIDE
-        col_a, col_b = st.columns(2)
-        with col_a:
-            if st.button("Mesaje", use_container_width=True):
-                st.session_state.admin_view = "msgs"
+        # Tabs pentru diferite funcționalități
+        tab_statistici, tab_purtare, tab_mesaje = st.tabs(["Statistici", "Purtare", "Mesaje"])
         
-        with col_b:
-            if st.button("Șterge", use_container_width=True, type="secondary"):
-                if st.checkbox("Confirmă ștergerea"):
-                    conn.execute("DELETE FROM messages WHERE dt < date('now', '-30 days')")
+        with tab_statistici:
+            st.markdown("### Statistici generale")
+            
+            # Statistici rapide
+            col_a1, col_a2, col_a3 = st.columns(3)
+            
+            with col_a1:
+                total_note = pd.read_sql("SELECT COUNT(*) FROM grades", conn).iloc[0,0]
+                st.metric("📚 Note totale", total_note)
+            
+            with col_a2:
+                total_absente = pd.read_sql("SELECT COUNT(*) FROM absente", conn).iloc[0,0]
+                st.metric("❌ Absențe totale", total_absente)
+            
+            with col_a3:
+                total_obs = pd.read_sql("SELECT COUNT(*) FROM observatii", conn).iloc[0,0]
+                st.metric("⚠️ Observații", total_obs)
+            
+            # Distribuția notelor
+            st.markdown("### Distribuția notelor")
+            dist_df = pd.read_sql("SELECT nota, COUNT(*) as count FROM grades GROUP BY nota ORDER BY nota", conn)
+            if not dist_df.empty:
+                st.bar_chart(dist_df.set_index('nota'))
+        
+        with tab_purtare:
+            st.markdown("### Gestionare note de purtare")
+            
+            # Selectare elev
+            elev_selectat = st.selectbox("Selectează elev", sorted(all_students), key="admin_elev")
+            
+            if elev_selectat:
+                # Afișare și modificare notă purtare
+                nota_curenta = get_purtare(elev_selectat, conn)
+                st.write(f"Nota curentă de purtare: **{nota_curenta}**")
+                
+                noua_nota = st.slider("Setează noua notă de purtare", 1, 10, nota_curenta, key=f"slider_{elev_selectat}")
+                
+                if st.button("Salvează nota de purtare", key=f"btn_save_{elev_selectat}", use_container_width=True):
+                    conn.execute("DELETE FROM purtare WHERE nume = ?", (elev_selectat,))
+                    conn.execute("INSERT INTO purtare (nume, nota) VALUES (?, ?)", (elev_selectat, noua_nota))
                     conn.commit()
-                    st.success("Șters!")
+                    st.success(f"Nota de purtare actualizată pentru {elev_selectat}: {noua_nota}")
+                    st.rerun()
         
-        # VIZUALIZARE
-        if 'admin_view' not in st.session_state:
-            st.session_state.admin_view = "stats"
-        
-        if st.session_state.admin_view == "msgs":
-            msgs = pd.read_sql("SELECT name, msg FROM messages ORDER BY dt DESC LIMIT 5", conn)
-            if not msgs.empty:
-                for _, row in msgs.iterrows():
-                    st.text(f"{row['name']}: {row['msg'][:30]}...")
-                    if st.button("🗑️", key=f"del_{row['name']}_{row['msg'][:10]}"):
-                        conn.execute("DELETE FROM messages WHERE name=? AND msg LIKE ?",
-                                   (row['name'], f"{row['msg'][:10]}%"))
-                        conn.commit()
-                        st.rerun()
+        with tab_mesaje:
+            st.markdown("### Gestionare observații")
+            
+            # Afișare toate observațiile
+            mesaje_df = pd.read_sql(
+                "SELECT id, data, nume, materie, observatie FROM observatii ORDER BY data DESC",
+                conn
+            )
+            
+            if not mesaje_df.empty:
+                for _, row in mesaje_df.iterrows():
+                    with st.container():
+                        col_m1, col_m2 = st.columns([4, 1])
+                        with col_m1:
+                            st.markdown(f"""
+                            <div style="background-color: rgba(255,165,0,0.1); padding: 8px; border-radius: 6px; margin: 3px 0;">
+                                <strong>{row['data']} - {row['nume']} ({row['materie']})</strong><br>
+                                {row['observatie']}
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col_m2:
+                            if st.button("Șterge", key=f"del_{row['id']}", type="secondary"):
+                                conn.execute("DELETE FROM observatii WHERE id = ?", (row['id'],))
+                                conn.commit()
+                                st.success("Observație ștearsă!")
+                                st.rerun()
             else:
-                st.info("Nu sunt mesaje")
+                st.info("Nu există observații în sistem.")
     
-    # ÎNCHIDE CONTAINER
+    # Închide container principal
     st.markdown('</div>', unsafe_allow_html=True)
 
-# FOOTER MIC
-st.markdown("<div style='height: 10px'></div>", unsafe_allow_html=True)
-st.caption("<center>v3.0</center>", unsafe_allow_html=True)
+# Footer
+st.markdown("---")
+st.markdown("<center><small>© 2024 Catalog Digital | Sistem școlar integrat</small></center>", unsafe_allow_html=True)
