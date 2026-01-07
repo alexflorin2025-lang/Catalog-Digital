@@ -1,9 +1,8 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import hashlib
-from streamlit_calendar import calendar
 
 # 1. Configurare Pagina
 st.set_page_config(
@@ -85,6 +84,14 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.8) !important;
         border-radius: 10px !important;
         padding: 15px !important;
+    }
+    
+    .small-calendar {
+        font-size: 0.8rem !important;
+    }
+    
+    .small-calendar .stDateInput {
+        font-size: 0.8rem !important;
     }
     
     </style>
@@ -449,7 +456,7 @@ else:
             st.session_state.clasa_selectata = clasa
             st.rerun()
         
-        # Selectare dată CALENDAR
+        # Selectare dată CALENDAR (folosind date_input nativ)
         st.markdown("### 📅 Selectează data")
         col_cal1, col_cal2 = st.columns([2, 1])
         
@@ -473,6 +480,42 @@ else:
                 <h3>{selected_date.strftime('%d.%m.%Y')}</h3>
             </div>
             """, unsafe_allow_html=True)
+        
+        # Calendar rapid pentru săptămâna curentă
+        st.markdown("#### 📅 Săptămâna curentă")
+        today = date.today()
+        start_of_week = today - timedelta(days=today.weekday())
+        
+        col_cal = st.columns(7)
+        days_of_week = ["Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă", "Duminică"]
+        
+        for i, (day_name, col) in enumerate(zip(days_of_week, col_cal)):
+            day_date = start_of_week + timedelta(days=i)
+            with col:
+                is_today = day_date == today
+                is_selected = day_date == selected_date
+                
+                if is_selected:
+                    col.markdown(f"""
+                    <div style="text-align: center; background-color: #3b82f6; 
+                                color: white; padding: 5px; border-radius: 5px; margin: 2px;">
+                        <div><strong>{day_name[:3]}</strong></div>
+                        <div><strong>{day_date.day}</strong></div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    col.markdown(f"""
+                    <div style="text-align: center; background-color: {'#f0f2f6' if is_today else '#2d3748'}; 
+                                color: {'black' if is_today else 'white'}; padding: 5px; border-radius: 5px; margin: 2px;">
+                        <div>{day_name[:3]}</div>
+                        <div>{day_date.day}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Buton pentru selectare rapidă
+                if st.button(f"✓", key=f"quick_select_{i}", help=f"Selectează {day_date.strftime('%d.%m')}"):
+                    st.session_state.selected_date = day_date.strftime("%Y-%m-%d")
+                    st.rerun()
         
         # Filtru elevi
         search_query = st.text_input("🔍 Caută elev...", key="search_elev")
