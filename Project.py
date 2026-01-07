@@ -393,6 +393,7 @@ else:
             data_str = selected_date.strftime("%Y-%m-%d")
             if data_str != st.session_state.selected_date:
                 st.session_state.selected_date = data_str
+                st.rerun()
         
         with col_cal2:
             st.markdown(f"""
@@ -538,11 +539,14 @@ else:
                 
                 col_stat1, col_stat2, col_stat3 = st.columns(3)
                 with col_stat1:
-                    st.metric("📊 Media clasei", f"{note_df['nota'].mean():.2f}")
+                    media = note_df['nota'].mean()
+                    st.metric("📊 Media clasei", f"{media:.2f}" if not pd.isna(media) else "0.00")
                 with col_stat2:
-                    st.metric("🏆 Nota maximă", f"{note_df['nota'].max():.2f}")
+                    nota_max = note_df['nota'].max()
+                    st.metric("🏆 Nota maximă", f"{nota_max:.2f}" if not pd.isna(nota_max) else "0.00")
                 with col_stat3:
-                    st.metric("📉 Nota minimă", f"{note_df['nota'].min():.2f}")
+                    nota_min = note_df['nota'].min()
+                    st.metric("📉 Nota minimă", f"{nota_min:.2f}" if not pd.isna(nota_min) else "0.00")
                 
                 st.dataframe(note_df, use_container_width=True, hide_index=True, height=400)
                 
@@ -585,7 +589,8 @@ else:
                     col_edit1, col_edit2, col_edit3, col_edit4 = st.columns([2, 1, 1, 1])
                     
                     with col_edit1:
-                        st.write(f"**{row['nume']}** - {row['data']}")
+                        data_formatata = datetime.strptime(row['data'], "%Y-%m-%d").strftime("%d.%m.%Y")
+                        st.write(f"**{row['nume']}** - {data_formatata}")
                     with col_edit2:
                         st.metric("Nota", row['nota'], label_visibility="collapsed")
                     with col_edit3:
@@ -593,4 +598,202 @@ else:
                                                    key=f"edit_{row['id']}")
                     with col_edit4:
                         col_btn1, col_btn2 = st.columns(2)
-                        with col_btn
+                        with col_btn1:
+                            if st.button("✏️", key=f"save_{row['id']}"):
+                                update_nota(row['id'], nota_noua, conn)
+                                st.success(f"Nota pentru {row['nume']} a fost actualizată!")
+                                st.rerun()
+                        with col_btn2:
+                            if st.button("🗑️", key=f"delete_{row['id']}", type="secondary"):
+                                delete_nota(row['id'], conn)
+                                st.success(f"Nota pentru {row['nume']} a fost ștearsă!")
+                                st.rerun()
+            else:
+                st.info("Nu s-au găsit note conform criteriilor de căutare.")
+    
+    # PARENT INTERFACE
+    elif st.session_state.role == "parent":
+        elev = st.session_state.nume_elev
+        clasa = st.session_state.clasa_selectata
+        
+        tab_medii, tab_note, tab_absente = st.tabs(["📊 Medii", "📝 Note detalii", "❌ Absențe"])
+        
+        with tab_medii:
+            st.markdown("### 📈 Medii pe materii")
+            
+            medii_elev = []
+            for materie in MATERII_GIMNAZIU:
+                media = get_media_elev(elev, materie, conn)
+                if media > 0:
+                    medii_elev.append((materie, media))
+            
+            if medii_elev:
+                medii_elev.sort(key=lambda x: x[1], reverse=True)
+                
+                for materie, media in medii_elev:
+                    col_mat, col_val = st.columns([3, 1])
+                    col_mat.write(f"**{materie}**")
+                    col_val.metric("", f"{media:.2f}", label_visibility="collapsed")
+                    
+                    progres = int((media / 10) * 100)
+                    st.progress(progres / 100)
+            else:
+                st.info("Elevul nu are note înregistrate.")
+        
+        with tab_note:
+            st.markdown("### 📝 Notele elevului")
+            
+            col_filtru1, col_filtru2 = st.columns(2)
+            with col_filtru1:
+                filtru_materie = st.selectbox("Materie", ["Toate"] + MATERII_GIMNAZIU, key="filtru_materie_parinte")
+            
+            with col_filtru2:
+                filtru_luna = st.selectbox("Lună", 
+                    ["Toate", "Septembrie", "Octombrie", "Noiembrie", "Decembrie", "Ianuarie", 
+                     "Februarie", "Martie", "Aprilie", "Mai", "Iunie"], key="filtru_luna")
+            
+            query = 'SELECT data, materie, nota FROM grades WHERE nume = ?'
+            params = [elev]
+            
+            if filtru_materie != "Toate":
+                query += " AND materie = ?"
+                params.append(filtru_materie)
+            
+            if filtru_luna != "Toate":
+                luni = {
+                    "Septembrie": "09", "Octombrie": "10", "Noiembrie": "11",
+                    "Decembrie": "12", "Ianuarie": "01", "Februarie": "02",
+                    "Martie": "03", "Aprilie": "04", "Mai": "05", "Iunie": "06"
+                }
+                query += " AND strftime('%m', data) = ?"
+                params.append(luni[filtru_luna])
+            
+            query += " ORDER BY data DESC"
+            note_df = pd.read_sql(query, conn, params=params)
+            
+            if not note_df.empty:
+                note_df['data'] = pd.to_datetime(note_df['data']).dt.strftime('%d.%m.%Y')
+                
+                media_generala = note_df['nota'].mean().round(2)
+                st.metric("🎓 Media generală", media_generala)
+                
+                st.dataframe(note_df, use_container_width=True, hide_index=True, height=300)
+            else:
+                st.info("Nu există note înregistrate.")
+        
+        with tab_absente:
+            st.markdown("### ❌ Absențele elevului")
+            
+            absente_df = pd.read_sql('SELECT data, materie FROM absente WHERE nume = ? ORDER BY data DESC', 
+                                   conn, params=[elev])
+            
+            if not absente_df.empty:
+                col_abs1, col_abs2, col_abs3 = st.columns(3)
+                
+                with col_abs1:
+                    total_abs = len(absente_df)
+                    st.metric("Total absențe", total_abs)
+                
+                with col_abs2:
+                    current_month = datetime.now().strftime("%Y-%m")
+                    abs_luna = len(absente_df[absente_df['data'].str.startswith(current_month)])
+                    st.metric("Această lună", abs_luna)
+                
+                with col_abs3:
+                    if not absente_df.empty:
+                        top_materie = absente_df['materie'].value_counts().index[0]
+                        st.metric("Materie frecventă", top_materie[:15])
+                
+                absente_df['data'] = pd.to_datetime(absente_df['data']).dt.strftime('%d.%m.%Y')
+                st.dataframe(absente_df, use_container_width=True, hide_index=True, height=300)
+            else:
+                st.success("✅ Nu există absențe înregistrate.")
+    
+    # ADMIN INTERFACE
+    else:
+        st.markdown("### 🏛️ Panou Administrativ")
+        
+        tab_statistici, tab_profesori, tab_elevi = st.tabs(["📊 Statistici", "👨‍🏫 Profesori", "👤 Elevi"])
+        
+        with tab_statistici:
+            col_stat1, col_stat2, col_stat3 = st.columns(3)
+            
+            with col_stat1:
+                total_elevi = sum(len(studenti) for studenti in CLASE.values())
+                st.metric("Total elevi", total_elevi)
+            
+            with col_stat2:
+                total_note = pd.read_sql("SELECT COUNT(*) FROM grades", conn).iloc[0,0]
+                st.metric("Note totale", total_note)
+            
+            with col_stat3:
+                total_abs = pd.read_sql("SELECT COUNT(*) FROM absente", conn).iloc[0,0]
+                st.metric("Absențe totale", total_abs)
+            
+            st.markdown("---")
+            
+            st.markdown("#### 📈 Statistici pe clase")
+            for clasa_nume, studenti in CLASE.items():
+                with st.expander(f"Clasa {clasa_nume} - {len(studenti)} elevi"):
+                    note_clasa = pd.read_sql(
+                        "SELECT materie, COUNT(*) as nr_note, AVG(nota) as media FROM grades WHERE clasa = ? GROUP BY materie",
+                        conn, params=[clasa_nume]
+                    )
+                    
+                    if not note_clasa.empty:
+                        note_clasa['media'] = note_clasa['media'].round(2)
+                        st.dataframe(note_clasa, use_container_width=True, hide_index=True)
+                    else:
+                        st.info("Nu există note pentru această clasă.")
+        
+        with tab_profesori:
+            st.markdown("### 👨‍🏫 Lista profesorilor")
+            
+            for profesor, info in PROFESORI.items():
+                col_prof1, col_prof2, col_prof3 = st.columns([2, 1, 1])
+                
+                with col_prof1:
+                    st.write(f"**{profesor}**")
+                    st.caption(f"Materie: {info['materie']}")
+                
+                with col_prof2:
+                    nr_note = pd.read_sql("SELECT COUNT(*) FROM grades WHERE profesor = ?",
+                                        conn, params=[profesor]).iloc[0,0]
+                    st.metric("Note adăugate", nr_note)
+        
+        with tab_elevi:
+            st.markdown("### 👤 Management elevi")
+            
+            clasa_admin = st.selectbox("Selectează clasa", list(CLASE.keys()), key="admin_clasa")
+            
+            for elev in CLASE[clasa_admin]:
+                col_elev1, col_elev2, col_elev3, col_elev4 = st.columns([2, 1, 1, 1])
+                
+                with col_elev1:
+                    st.write(f"**{elev}**")
+                
+                with col_elev2:
+                    media_result = pd.read_sql("SELECT AVG(nota) FROM grades WHERE nume = ?",
+                                            conn, params=[elev])
+                    media = media_result.iloc[0,0]
+                    st.metric("Medie", f"{media:.2f}" if media else "-")
+                
+                with col_elev3:
+                    absente = pd.read_sql("SELECT COUNT(*) FROM absente WHERE nume = ?",
+                                        conn, params=[elev]).iloc[0,0]
+                    st.metric("Absențe", absente)
+                
+                with col_elev4:
+                    purtare = pd.read_sql("SELECT nota FROM purtare WHERE nume = ?",
+                                        conn, params=[elev])
+                    nota_purtare = purtare.iloc[0,0] if not purtare.empty else 10
+                    st.metric("Purtare", nota_purtare)
+
+# Footer
+st.markdown("---")
+st.markdown(f"""
+<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 10px;">
+    <p>🎓 <strong>Catalog Digital</strong> | Anul școlar 2025-2026</p>
+    <p>© 2026 | Sistem integrat de management școlar | Versiunea 4.0</p>
+</div>
+""", unsafe_allow_html=True)
