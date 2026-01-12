@@ -154,75 +154,75 @@ MATERII_GIMNAZIU = [
 PROFESORI = {
     "Popescu Maria": {
         "materie": "Matematică",
-        "parola_hash": hashlib.sha256("ProfPopescu2026@".encode()).hexdigest()
+        "parola": "ProfPopescu2026@"
     },
     "Ionescu Ion": {
         "materie": "Limba și literatura română",
-        "parola_hash": hashlib.sha256("ProfIonescu2026@".encode()).hexdigest()
+        "parola": "ProfIonescu2026@"
     },
     "Vasilescu Elena": {
         "materie": "Limba engleză",
-        "parola_hash": hashlib.sha256("ProfVasilescu2026@".encode()).hexdigest()
+        "parola": "ProfVasilescu2026@"
     },
     "Dumitrescu Andreea": {
         "materie": "Limba franceză",
-        "parola_hash": hashlib.sha256("ProfDumitrescu2026@".encode()).hexdigest()
+        "parola": "ProfDumitrescu2026@"
     },
     "Constantin Mihai": {
         "materie": "Limba germană",
-        "parola_hash": hashlib.sha256("ProfConstantin2026@".encode()).hexdigest()
+        "parola": "ProfConstantin2026@"
     },
     "Radu Alexandra": {
         "materie": "Limba spaniolă",
-        "parola_hash": hashlib.sha256("ProfRadu2026@".encode()).hexdigest()
+        "parola": "ProfRadu2026@"
     },
     "Stanescu Vlad": {
         "materie": "Istorie",
-        "parola_hash": hashlib.sha256("ProfStanescu2026@".encode()).hexdigest()
+        "parola": "ProfStanescu2026@"
     },
     "Georgescu Ana": {
         "materie": "Geografie",
-        "parola_hash": hashlib.sha256("ProfGeorgescu2026@".encode()).hexdigest()
+        "parola": "ProfGeorgescu2026@"
     },
     "Marinescu Dan": {
         "materie": "Biologie",
-        "parola_hash": hashlib.sha256("ProfMarinescu2026@".encode()).hexdigest()
+        "parola": "ProfMarinescu2026@"
     },
     "Popa Cristian": {
         "materie": "Fizică",
-        "parola_hash": hashlib.sha256("ProfPopa2026@".encode()).hexdigest()
+        "parola": "ProfPopa2026@"
     },
     "Munteanu Ioana": {
         "materie": "Chimie",
-        "parola_hash": hashlib.sha256("ProfMunteanu2026@".encode()).hexdigest()
+        "parola": "ProfMunteanu2026@"
     },
     "Badea Sorin": {
         "materie": "Educație fizică și sport",
-        "parola_hash": hashlib.sha256("ProfBadea2026@".encode()).hexdigest()
+        "parola": "ProfBadea2026@"
     },
     "Ilie Carmen": {
         "materie": "Educație plastică",
-        "parola_hash": hashlib.sha256("ProfIlie2026@".encode()).hexdigest()
+        "parola": "ProfIlie2026@"
     },
     "Stoica Gabriel": {
         "materie": "Educație muzicală",
-        "parola_hash": hashlib.sha256("ProfStoica2026@".encode()).hexdigest()
+        "parola": "ProfStoica2026@"
     },
     "Nistor Radu": {
         "materie": "Educație tehnologică",
-        "parola_hash": hashlib.sha256("ProfNistor2026@".encode()).hexdigest()
+        "parola": "ProfNistor2026@"
     },
     "Tudor Mihaela": {
         "materie": "Informatică și TIC",
-        "parola_hash": hashlib.sha256("ProfTudor2026@".encode()).hexdigest()
+        "parola": "ProfTudor2026@"
     },
     "Diaconu Petru": {
         "materie": "Religie",
-        "parola_hash": hashlib.sha256("ProfDiaconu2026@".encode()).hexdigest()
+        "parola": "ProfDiaconu2026@"
     },
     "Serban Laura": {
         "materie": "Consiliere și orientare",
-        "parola_hash": hashlib.sha256("ProfSerban2026@".encode()).hexdigest()
+        "parola": "ProfSerban2026@"
     }
 }
 
@@ -258,7 +258,7 @@ ELEVI = {
 }
 
 # 6. Parola directoare
-PAROLA_DIRECTOARE = hashlib.sha256("Directoare2026@".encode()).hexdigest()
+PAROLA_DIRECTOARE = "Directoare2026@"
 
 # 7. Initializare Baza de Date
 @st.cache_resource
@@ -311,11 +311,14 @@ def init_db():
 # 8. Funcții utilitare
 def verify_password(password, role, username=None):
     if role == "teacher" and username:
-        return PROFESORI.get(username, {}).get("parola_hash") == hashlib.sha256(password.encode()).hexdigest()
+        # Verifică direct parola, nu hash-ul
+        return PROFESORI.get(username, {}).get("parola") == password
     elif role == "parent" and username:
+        # Verifică direct parola
         return ELEVI.get(username) == password
     elif role == "admin":
-        return hashlib.sha256(password.encode()).hexdigest() == PAROLA_DIRECTOARE
+        # Verifică direct parola
+        return PAROLA_DIRECTOARE == password
     return False
 
 def elev_are_absenta(data_str, nume_elev, materie, conn):
@@ -583,8 +586,6 @@ if not st.session_state.logged_in:
         <p style="color: #94a3b8; font-size: 1.2rem;">Anul școlar 2025-2026</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # REMOVED: Secțiunea cu informațiile de autentificare care afișa parolele
     
     tab_prof, tab_parinte, tab_directoare = st.tabs(["👨‍🏫 Profesor", "👪 Părinte", "🏛️ Directoare"])
     
