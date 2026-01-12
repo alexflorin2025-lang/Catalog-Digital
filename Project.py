@@ -1,17 +1,4 @@
 import streamlit as st
-import sqlite3
-import pandas as pd
-from datetime import datetime, date, timedelta
-import hashlib
-import calendar
-import json
-import os
-import time
-from typing import Dict, List, Tuple, Optional, Any
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-import numpy as np
 
 # ============================================
 # 1. CONFIGURARE PAGINĂ AVANSATĂ
@@ -26,13 +13,27 @@ st.set_page_config(
         'Report a bug': None,
         'About': """
         ## 🎓 Catalog Digital 2026
-        **Versiunea:** 6.0 Premium
+        **Versiunea:** 1.0 Premium
         **Anul școlar:** 2025-2026
         **Dezvoltat de:** Departamentul IT Școlar
         **Licență:** EDU-SOFT 2026
         """
     }
 )
+
+import sqlite3
+import pandas as pd
+from datetime import datetime, date, timedelta
+import hashlib
+import calendar
+import json
+import os
+import time
+from typing import Dict, List, Tuple, Optional, Any
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+import numpy as np
 
 # ============================================
 # 2. SISTEM AVANSAT DE STILURI CSS
@@ -3467,3 +3468,4 @@ else:
                 # Statistici observații
                 total_obs = len(observatii)
                 laud
+
