@@ -91,7 +91,29 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. PROFESORI - fiecare cu materie proprie (mai mulți profesori pot avea aceeași materie)
+# 3. TOATE MATERIILE DE GIMNAZIU
+MATERII_GIMNAZIU = [
+    "Limba și literatura română",
+    "Matematică",
+    "Limba engleză",
+    "Limba franceză",
+    "Limba germană",
+    "Limba spaniolă",
+    "Istorie",
+    "Geografie",
+    "Biologie",
+    "Fizică",
+    "Chimie",
+    "Educație fizică și sport",
+    "Educație plastică",
+    "Educație muzicală",
+    "Educație tehnologică",
+    "Informatică și TIC",
+    "Religie",
+    "Consiliere și orientare"
+]
+
+# 4. PROFESORI - câte unul pentru fiecare materie
 PROFESORI = {
     "Popescu Maria": {
         "materie": "Matematică",
@@ -101,33 +123,73 @@ PROFESORI = {
         "materie": "Limba și literatura română",
         "parola_hash": hashlib.sha256("ProfIonescu2026@".encode()).hexdigest()
     },
+    "Vasilescu Elena": {
+        "materie": "Limba engleză",
+        "parola_hash": hashlib.sha256("ProfVasilescu2026@".encode()).hexdigest()
+    },
+    "Dumitrescu Andreea": {
+        "materie": "Limba franceză",
+        "parola_hash": hashlib.sha256("ProfDumitrescu2026@".encode()).hexdigest()
+    },
+    "Constantin Mihai": {
+        "materie": "Limba germană",
+        "parola_hash": hashlib.sha256("ProfConstantin2026@".encode()).hexdigest()
+    },
+    "Radu Alexandra": {
+        "materie": "Limba spaniolă",
+        "parola_hash": hashlib.sha256("ProfRadu2026@".encode()).hexdigest()
+    },
+    "Stanescu Vlad": {
+        "materie": "Istorie",
+        "parola_hash": hashlib.sha256("ProfStanescu2026@".encode()).hexdigest()
+    },
     "Georgescu Ana": {
-        "materie": "Informatică și TIC",
+        "materie": "Geografie",
         "parola_hash": hashlib.sha256("ProfGeorgescu2026@".encode()).hexdigest()
     },
     "Marinescu Dan": {
         "materie": "Biologie",
         "parola_hash": hashlib.sha256("ProfMarinescu2026@".encode()).hexdigest()
     },
-    "Vasilescu Elena": {
-        "materie": "Limba engleză",
-        "parola_hash": hashlib.sha256("ProfVasilescu2026@".encode()).hexdigest()
-    },
-    "Constantin Mihai": {
-        "materie": "Istorie",
-        "parola_hash": hashlib.sha256("ProfConstantin2026@".encode()).hexdigest()
-    },
-    "Dumitrescu Andreea": {
-        "materie": "Geografie",
-        "parola_hash": hashlib.sha256("ProfDumitrescu2026@".encode()).hexdigest()
-    },
-    "Stanescu Vlad": {
+    "Popa Cristian": {
         "materie": "Fizică",
-        "parola_hash": hashlib.sha256("ProfStanescu2026@".encode()).hexdigest()
+        "parola_hash": hashlib.sha256("ProfPopa2026@".encode()).hexdigest()
+    },
+    "Munteanu Ioana": {
+        "materie": "Chimie",
+        "parola_hash": hashlib.sha256("ProfMunteanu2026@".encode()).hexdigest()
+    },
+    "Badea Sorin": {
+        "materie": "Educație fizică și sport",
+        "parola_hash": hashlib.sha256("ProfBadea2026@".encode()).hexdigest()
+    },
+    "Ilie Carmen": {
+        "materie": "Educație plastică",
+        "parola_hash": hashlib.sha256("ProfIlie2026@".encode()).hexdigest()
+    },
+    "Stoica Gabriel": {
+        "materie": "Educație muzicală",
+        "parola_hash": hashlib.sha256("ProfStoica2026@".encode()).hexdigest()
+    },
+    "Nistor Radu": {
+        "materie": "Educație tehnologică",
+        "parola_hash": hashlib.sha256("ProfNistor2026@".encode()).hexdigest()
+    },
+    "Tudor Mihaela": {
+        "materie": "Informatică și TIC",
+        "parola_hash": hashlib.sha256("ProfTudor2026@".encode()).hexdigest()
+    },
+    "Diaconu Petru": {
+        "materie": "Religie",
+        "parola_hash": hashlib.sha256("ProfDiaconu2026@".encode()).hexdigest()
+    },
+    "Serban Laura": {
+        "materie": "Consiliere și orientare",
+        "parola_hash": hashlib.sha256("ProfSerban2026@".encode()).hexdigest()
     }
 }
 
-# 4. ELEVI - nume și parole
+# 5. ELEVI
 ELEVI = {
     "Albert": "Albert2026#",
     "Alexandru": "Alexandru2026#",
@@ -158,16 +220,8 @@ ELEVI = {
     "Popescu Dan": "PopescuD2026#"
 }
 
-# 5. Parola directoare
+# 6. Parola directoare
 PAROLA_DIRECTOARE = hashlib.sha256("Directoare2026@".encode()).hexdigest()
-
-# 6. Toate materiile de gimnaziu
-MATERII_GIMNAZIU = [
-    "Limba și literatura română", "Matematică", "Limba engleză", "Limba franceză",
-    "Limba germană", "Istorie", "Geografie", "Biologie", "Fizică", "Chimie",
-    "Educație fizică și sport", "Educație plastică", "Educație muzicală",
-    "Educație tehnologică", "Informatică și TIC", "Religie", "Consiliere și orientare"
-]
 
 # 7. Initializare Baza de Date
 @st.cache_resource
@@ -175,7 +229,6 @@ def init_db():
     conn = sqlite3.connect('catalog_2026.db', check_same_thread=False)
     c = conn.cursor()
     
-    # Note
     c.execute('''CREATE TABLE IF NOT EXISTS grades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
@@ -187,7 +240,6 @@ def init_db():
         UNIQUE(data, nume, materie)
     )''')
     
-    # Absențe - DOAR pentru ziua respectivă
     c.execute('''CREATE TABLE IF NOT EXISTS absente (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
@@ -197,7 +249,6 @@ def init_db():
         UNIQUE(data, nume, materie)
     )''')
     
-    # Observații cu tip (laudă, mustrare, atenționare)
     c.execute('''CREATE TABLE IF NOT EXISTS observatii (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         data DATE,
@@ -208,7 +259,6 @@ def init_db():
         profesor TEXT
     )''')
     
-    # Purtare cu istoric modificări
     c.execute('''CREATE TABLE IF NOT EXISTS purtare (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nume TEXT,
@@ -232,7 +282,6 @@ def verify_password(password, role, username=None):
     return False
 
 def elev_are_absenta(data_str, nume_elev, materie, conn):
-    """Verifică dacă elevul are absență în ziua respectivă"""
     cursor = conn.cursor()
     cursor.execute('SELECT 1 FROM absente WHERE data = ? AND nume = ? AND materie = ?', 
                    (data_str, nume_elev, materie))
@@ -260,7 +309,6 @@ def get_media_elev(nume_elev, materie, conn):
     return round(result[0], 2) if result and result[0] else 0.00
 
 def get_nota_purtare_curenta(nume_elev, conn):
-    """Obține ultima notă de purtare pentru elev"""
     cursor = conn.cursor()
     cursor.execute('''
         SELECT nota FROM purtare 
@@ -269,10 +317,9 @@ def get_nota_purtare_curenta(nume_elev, conn):
         LIMIT 1
     ''', (nume_elev,))
     result = cursor.fetchone()
-    return result[0] if result else 10  # Default 10 dacă nu există
+    return result[0] if result else 10
 
 def update_purtare(nume_elev, nota_noua, motiv, profesor, conn):
-    """Actualizează nota de purtare cu motiv"""
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO purtare (nume, nota, data_modificare, motiv, profesor) 
@@ -281,7 +328,6 @@ def update_purtare(nume_elev, nota_noua, motiv, profesor, conn):
     conn.commit()
 
 def get_observatii_elev(nume_elev, conn):
-    """Obține toate observațiile pentru un elev"""
     cursor = conn.cursor()
     cursor.execute('''
         SELECT data, materie, observatie, tip, profesor 
@@ -292,7 +338,6 @@ def get_observatii_elev(nume_elev, conn):
     return cursor.fetchall()
 
 def adauga_observatie(data_str, nume_elev, materie, observatie, tip, profesor, conn):
-    """Adaugă o observație nouă"""
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO observatii (data, nume, materie, observatie, tip, profesor) 
@@ -354,20 +399,37 @@ if not st.session_state.logged_in:
         st.info("""
         **Parole pentru testare (2026):**
         
-        **Profesori:** ProfNume2026@ (ex: ProfPopescu2026@)
+        **Profesori:** ProfNumeProfesor2026@ (ex: ProfPopescu2026@)
+        
+        **Lista profesori și materii:**
+        - Popescu Maria - Matematică
+        - Ionescu Ion - Limba și literatura română
+        - Vasilescu Elena - Limba engleză
+        - Dumitrescu Andreea - Limba franceză
+        - Constantin Mihai - Limba germană
+        - Radu Alexandra - Limba spaniolă
+        - Stanescu Vlad - Istorie
+        - Georgescu Ana - Geografie
+        - Marinescu Dan - Biologie
+        - Popa Cristian - Fizică
+        - Munteanu Ioana - Chimie
+        - Badea Sorin - Educație fizică și sport
+        - Ilie Carmen - Educație plastică
+        - Stoica Gabriel - Educație muzicală
+        - Nistor Radu - Educație tehnologică
+        - Tudor Mihaela - Informatică și TIC
+        - Diaconu Petru - Religie
+        - Serban Laura - Consiliere și orientare
         
         **Elevi/Părinți:** NumeElev2026# (ex: Albert2026#)
         
         **Directoare:** Directoare2026@
-        
-        **Materii disponibile:** Toate materiile de gimnaziu
         """)
     
     tab_prof, tab_parinte, tab_directoare = st.tabs(["👨‍🏫 Profesor", "👪 Părinte", "🏛️ Directoare"])
     
     with tab_prof:
         st.subheader("Autentificare Profesor")
-        # Profesorul selectează numele său
         profesor_selectat = st.selectbox("Selectează numele tău", list(PROFESORI.keys()), key="login_profesor")
         parola = st.text_input("Introdu parola ta", type="password", key="parola_prof")
         
@@ -467,7 +529,6 @@ else:
             data_str = selected_date.strftime("%Y-%m-%d")
             if data_str != st.session_state.selected_date:
                 st.session_state.selected_date = data_str
-                st.rerun()
         
         with col_cal2:
             st.markdown(f"""
@@ -477,7 +538,6 @@ else:
             </div>
             """, unsafe_allow_html=True)
         
-        # Calendar săptămânal
         st.markdown("#### 📅 Săptămâna curentă")
         today = date.today()
         start_of_week = today - timedelta(days=today.weekday())
@@ -520,7 +580,9 @@ else:
         if selected_menu == "📝 Adaugă note/absente/observații":
             for elev in elevi_filtrati:
                 with st.expander(f"👤 {elev}", expanded=False):
-                    # Secțiunea pentru note
+                    # ORDINEA NOUĂ: Note, Absențe, Observații, Purtare
+                    
+                    # 1. NOTE
                     st.markdown("#### 📝 Note")
                     are_absenta = elev_are_absenta(data_str, elev, st.session_state.materie, conn)
                     
@@ -555,7 +617,7 @@ else:
                                     st.success(f"Nota pentru {elev} a fost ștearsă!")
                                     st.rerun()
                         else:
-                            col_nota, col_abs = st.columns(2)
+                            col_nota, col_abs_btn = st.columns(2)
                             
                             with col_nota:
                                 nota_noua = st.number_input("Notă", 1.0, 10.0, 8.0, 0.5, key=f"nota_{elev}")
@@ -570,21 +632,31 @@ else:
                                     except sqlite3.IntegrityError:
                                         st.error("Nota există deja pentru această zi!")
                             
-                            with col_abs:
-                                if st.button("❌ Marchează absent", key=f"abs_{elev}", type="secondary"):
-                                    try:
-                                        conn.execute('INSERT INTO absente (data, clasa, nume, materie) VALUES (?, ?, ?, ?)',
-                                                    (data_str, clasa, elev, st.session_state.materie))
-                                        conn.commit()
-                                        st.warning(f"{elev} marcat absent!")
-                                        st.rerun()
-                                    except sqlite3.IntegrityError:
-                                        st.error("Absența există deja!")
+                            with col_abs_btn:
+                                st.write("")  # Spacing
+                                st.write("")
                     
                     st.markdown("---")
                     
-                    # Secțiunea pentru observații
-                    st.markdown("#### 📝 Observații")
+                    # 2. ABSENȚE
+                    st.markdown("#### ❌ Absențe")
+                    if not are_absenta:
+                        if st.button("❌ Marchează absent", key=f"abs_{elev}", use_container_width=True):
+                            try:
+                                conn.execute('INSERT INTO absente (data, clasa, nume, materie) VALUES (?, ?, ?, ?)',
+                                            (data_str, clasa, elev, st.session_state.materie))
+                                conn.commit()
+                                st.warning(f"{elev} marcat absent!")
+                                st.rerun()
+                            except sqlite3.IntegrityError:
+                                st.error("Absența există deja!")
+                    else:
+                        st.success("✅ Absență deja marcată pentru această zi")
+                    
+                    st.markdown("---")
+                    
+                    # 3. OBSERVAȚII
+                    st.markdown("#### 📋 Observații")
                     observatie = st.text_area("Observație comportamentală", 
                                             placeholder="Scrie observația aici...",
                                             key=f"obs_{elev}",
@@ -599,6 +671,8 @@ else:
                                                 observatie.strip(), "laudă", st.session_state.username, conn)
                                 st.success(f"Laudă adăugată pentru {elev}!")
                                 st.rerun()
+                            else:
+                                st.warning("Completează observația!")
                     
                     with col_obs2:
                         if st.button("⚠️ Atenționare", key=f"atentionare_{elev}", use_container_width=True):
@@ -607,6 +681,8 @@ else:
                                                 observatie.strip(), "atenționare", st.session_state.username, conn)
                                 st.warning(f"Atenționare adăugată pentru {elev}!")
                                 st.rerun()
+                            else:
+                                st.warning("Completează observația!")
                     
                     with col_obs3:
                         if st.button("❌ Mustrare", key=f"mustrare_{elev}", use_container_width=True):
@@ -615,10 +691,12 @@ else:
                                                 observatie.strip(), "mustrare", st.session_state.username, conn)
                                 st.error(f"Mustrare adăugată pentru {elev}!")
                                 st.rerun()
+                            else:
+                                st.warning("Completează observația!")
                     
                     st.markdown("---")
                     
-                    # Secțiunea pentru purtare
+                    # 4. PURTARE
                     st.markdown("#### ⭐ Purtare")
                     nota_purtare_curenta = get_nota_purtare_curenta(elev, conn)
                     st.write(f"**Nota curentă de purtare:** {nota_purtare_curenta}")
@@ -633,6 +711,8 @@ else:
                                                     key=f"motiv_{elev}")
                     
                     with col_purt2:
+                        st.write("")
+                        st.write("")
                         if st.button("💾 Salvează purtare", key=f"save_purt_{elev}", use_container_width=True):
                             if motiv_purtare.strip():
                                 update_purtare(elev, noua_nota_purtare, motiv_purtare.strip(), 
@@ -750,37 +830,16 @@ else:
                 st.info("Nu s-au găsit note conform criteriilor de căutare.")
     
     # ============================================
-    # INTERFAȚA PĂRINTE
+    # INTERFAȚA PĂRINTE (ORDINEA NOUĂ)
     # ============================================
     elif st.session_state.role == "parent":
         elev = st.session_state.nume_elev
         clasa = st.session_state.clasa_selectata
         
-        tab_medii, tab_note, tab_absente, tab_observatii, tab_purtare = st.tabs(
-            ["📊 Medii", "📝 Note", "❌ Absențe", "📋 Observații", "⭐ Purtare"]
+        # ORDINEA NOUĂ: Note, Absențe, Observații, Medii, Purtare
+        tab_note, tab_absente, tab_observatii, tab_medii, tab_purtare = st.tabs(
+            ["📝 Note", "❌ Absențe", "📋 Observații", "📊 Medii", "⭐ Purtare"]
         )
-        
-        with tab_medii:
-            st.markdown("### 📈 Medii pe materii")
-            
-            medii_elev = []
-            for materie in MATERII_GIMNAZIU:
-                media = get_media_elev(elev, materie, conn)
-                if media > 0:
-                    medii_elev.append((materie, media))
-            
-            if medii_elev:
-                medii_elev.sort(key=lambda x: x[1], reverse=True)
-                
-                for materie, media in medii_elev:
-                    col_mat, col_val = st.columns([3, 1])
-                    col_mat.write(f"**{materie}**")
-                    col_val.metric("", f"{media:.2f}", label_visibility="collapsed")
-                    
-                    progres = int((media / 10) * 100)
-                    st.progress(progres / 100)
-            else:
-                st.info("Elevul nu are note înregistrate.")
         
         with tab_note:
             st.markdown("### 📝 Notele elevului")
@@ -877,7 +936,7 @@ else:
                             <strong>Observație:</strong> {text_obs}
                         </div>
                         """, unsafe_allow_html=True)
-                    else:  # atenționare
+                    else:
                         st.markdown(f"""
                         <div class="warning-box">
                             <strong>⚠️ Atenționare - {data_formatata}</strong><br>
@@ -888,14 +947,34 @@ else:
             else:
                 st.success("✅ Nu există observații înregistrate.")
         
+        with tab_medii:
+            st.markdown("### 📈 Medii pe materii")
+            
+            medii_elev = []
+            for materie in MATERII_GIMNAZIU:
+                media = get_media_elev(elev, materie, conn)
+                if media > 0:
+                    medii_elev.append((materie, media))
+            
+            if medii_elev:
+                medii_elev.sort(key=lambda x: x[1], reverse=True)
+                
+                for materie, media in medii_elev:
+                    col_mat, col_val = st.columns([3, 1])
+                    col_mat.write(f"**{materie}**")
+                    col_val.metric("", f"{media:.2f}", label_visibility="collapsed")
+                    
+                    progres = int((media / 10) * 100)
+                    st.progress(progres / 100)
+            else:
+                st.info("Elevul nu are note înregistrate.")
+        
         with tab_purtare:
             st.markdown("### ⭐ Situația purtării")
             
-            # Obține nota curentă de purtare
             nota_curenta = get_nota_purtare_curenta(elev, conn)
             st.metric("Nota curentă de purtare", f"{nota_curenta}/10")
             
-            # Obține istoricul modificărilor
             istoric_purtare = pd.read_sql('''
                 SELECT nota, data_modificare, motiv, profesor 
                 FROM purtare 
@@ -995,9 +1074,8 @@ else:
                     nota_purtare = get_nota_purtare_curenta(elev, conn)
                     st.metric("Purtare", nota_purtare)
 
-# Footer
 st.markdown("---")
-st.markdown(f"""
+st.markdown("""
 <div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 10px;">
     <p>🎓 <strong>Catalog Digital</strong> | Anul școlar 2025-2026</p>
     <p>© 2026 | Sistem integrat de management școlar | Versiunea 5.0</p>
