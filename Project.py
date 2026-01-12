@@ -534,7 +534,7 @@ else:
             st.markdown(f"""
             <div class="date-selector">
                 <h4>📅 Data selectată:</h4>
-                <h3>{selected_date.strftime('%d.%m.%Y')}</h3>
+                <h1 style="font-size: 3rem; margin: 10px 0; color: #3b82f6;">{selected_date.strftime('%d.%m.%Y')}</h1>
             </div>
             """, unsafe_allow_html=True)
         
@@ -548,27 +548,32 @@ else:
         for i, (day_name, col) in enumerate(zip(days_of_week, col_cal)):
             day_date = start_of_week + timedelta(days=i)
             with col:
-                is_today = day_date == today
                 is_selected = day_date == selected_date
                 
+                # Stilul pentru ziua selectată (întotdeauna albastru)
                 if is_selected:
                     col.markdown(f"""
                     <div style="text-align: center; background-color: #3b82f6; 
-                                color: white; padding: 5px; border-radius: 5px; margin: 2px;">
-                        <div><strong>{day_name[:3]}</strong></div>
-                        <div><strong>{day_date.day}</strong></div>
+                                color: white; padding: 8px; border-radius: 8px; margin: 2px;
+                                box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);">
+                        <div style="font-size: 0.75rem;"><strong>{day_name[:3]}</strong></div>
+                        <div style="font-size: 1.2rem; font-weight: bold;">{day_date.day}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 else:
+                    # Ziua curentă (verde) sau alte zile (gri închis)
+                    is_today = day_date == today
                     col.markdown(f"""
-                    <div style="text-align: center; background-color: {'#f0f2f6' if is_today else '#2d3748'}; 
-                                color: {'black' if is_today else 'white'}; padding: 5px; border-radius: 5px; margin: 2px;">
-                        <div>{day_name[:3]}</div>
-                        <div>{day_date.day}</div>
+                    <div style="text-align: center; background-color: {'#22c55e' if is_today else '#2d3748'}; 
+                                color: white; padding: 8px; border-radius: 8px; margin: 2px;
+                                cursor: pointer; transition: all 0.3s;">
+                        <div style="font-size: 0.75rem;">{day_name[:3]}</div>
+                        <div style="font-size: 1.1rem;">{day_date.day}</div>
                     </div>
                     """, unsafe_allow_html=True)
                 
-                if st.button("✓", key=f"quick_select_{i}", help=f"Selectează {day_date.strftime('%d.%m')}"):
+                # Buton pentru selectare
+                if st.button("✓", key=f"quick_select_{i}", help=f"Selectează {day_date.strftime('%d.%m.%Y')}"):
                     st.session_state.selected_date = day_date.strftime("%Y-%m-%d")
                     st.rerun()
         
