@@ -584,36 +584,7 @@ if not st.session_state.logged_in:
     </div>
     """, unsafe_allow_html=True)
     
-    with st.expander("ℹ️ Informații autentificare", expanded=False):
-        st.info("""
-        **Parole pentru testare (2026):**
-        
-        **Profesori:** ProfNumeProfesor2026@ (ex: ProfPopescu2026@)
-        
-        **Lista profesori și materii:**
-        - Popescu Maria - Matematică
-        - Ionescu Ion - Limba și literatura română
-        - Vasilescu Elena - Limba engleză
-        - Dumitrescu Andreea - Limba franceză
-        - Constantin Mihai - Limba germană
-        - Radu Alexandra - Limba spaniolă
-        - Stanescu Vlad - Istorie
-        - Georgescu Ana - Geografie
-        - Marinescu Dan - Biologie
-        - Popa Cristian - Fizică
-        - Munteanu Ioana - Chimie
-        - Badea Sorin - Educație fizică și sport
-        - Ilie Carmen - Educație plastică
-        - Stoica Gabriel - Educație muzicală
-        - Nistor Radu - Educație tehnologică
-        - Tudor Mihaela - Informatică și TIC
-        - Diaconu Petru - Religie
-        - Serban Laura - Consiliere și orientare
-        
-        **Elevi/Părinți:** NumeElev2026# (ex: Albert2026#)
-        
-        **Directoare:** Directoare2026@
-        """)
+    # REMOVED: Secțiunea cu informațiile de autentificare care afișa parolele
     
     tab_prof, tab_parinte, tab_directoare = st.tabs(["👨‍🏫 Profesor", "👪 Părinte", "🏛️ Directoare"])
     
