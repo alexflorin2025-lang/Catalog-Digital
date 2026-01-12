@@ -13,7 +13,7 @@ st.set_page_config(
         'Report a bug': None,
         'About': """
         ## 🎓 Catalog Digital 2026
-        **Versiunea:** 1.0 Premium
+        **Versiunea:** 6.0 Premium
         **Anul școlar:** 2025-2026
         **Dezvoltat de:** Departamentul IT Școlar
         **Licență:** EDU-SOFT 2026
@@ -21,6 +21,12 @@ st.set_page_config(
     }
 )
 
+# IMPORTURI CRITICE pentru Plotly
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+
+# Apoi restul importurilor
 import sqlite3
 import pandas as pd
 from datetime import datetime, date, timedelta
@@ -30,9 +36,6 @@ import json
 import os
 import time
 from typing import Dict, List, Tuple, Optional, Any
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 import numpy as np
 
 # ============================================
@@ -3468,4 +3471,5 @@ else:
                 # Statistici observații
                 total_obs = len(observatii)
                 laud
+
 
