@@ -21,12 +21,6 @@ st.set_page_config(
     }
 )
 
-# IMPORTURI CRITICE pentru Plotly
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-
-# Apoi restul importurilor
 import sqlite3
 import pandas as pd
 from datetime import datetime, date, timedelta
@@ -726,7 +720,7 @@ ELEVI = {
         "adresa": "Strada Liliacilor nr. 26",
         "telefon_parinte": "0740546050",
         "email_parinte": "parinte.rares.volintiru@gmail.com",
-        "observatii_speciale": "Talent la desen"
+        "observatii_speciale": "Talent at desen"
     },
     "Yanis": {
         "parola": "Yanis2026#",
@@ -2333,42 +2327,52 @@ else:
                 coverage = (days_with_grades / total_school_days * 100) if total_school_days > 0 else 0
                 st.metric("📈 Acoperire evaluare", f"{coverage:.1f}%")
             
-            # Heatmap pentru activitate
-            st.markdown("#### 🎨 Heatmap Activitate")
+            # Afișare statistici în loc de heatmap Plotly
+            st.markdown("#### 🎨 Statistici Activitate")
             
             try:
-                # Generează date pentru heatmap
+                # Generează date pentru statistici
                 heatmap_data = generate_calendar_heatmap_data(
                     clasa, st.session_state.materie, conn, selected_year
                 )
                 
                 if not heatmap_data.empty:
-                    # Creează heatmap cu Plotly
-                    fig = px.density_heatmap(
-                        heatmap_data,
-                        x='saptamana',
-                        y='luna',
-                        z='medie_zi',
-                        histfunc="avg",
-                        color_continuous_scale="Viridis",
-                        title=f"Heatmap Activitate - {selected_year}",
-                        labels={
-                            'saptamana': 'Săptămâna',
-                            'luna': 'Luna',
-                            'medie_zi': 'Medie notă'
-                        }
-                    )
+                    # Afișează datele ca tabel în loc de grafic Plotly
+                    st.markdown(f"**Date statistice pentru {selected_year}**")
                     
-                    fig.update_layout(
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        font_color='white',
-                        height=400
-                    )
+                    # Creează un rezumat lunar
+                    monthly_summary = heatmap_data.groupby('luna').agg({
+                        'medie_zi': 'mean',
+                        'numar_note': 'sum'
+                    }).round(2).reset_index()
                     
-                    st.plotly_chart(fig, use_container_width=True)
+                    monthly_summary.columns = ['Luna', 'Medie lunară', 'Total note']
+                    
+                    # Adaugă nume lună
+                    month_names = {
+                        1: 'Ianuarie', 2: 'Februarie', 3: 'Martie', 4: 'Aprilie',
+                        5: 'Mai', 6: 'Iunie', 7: 'Iulie', 8: 'August',
+                        9: 'Septembrie', 10: 'Octombrie', 11: 'Noiembrie', 12: 'Decembrie'
+                    }
+                    
+                    monthly_summary['Luna'] = monthly_summary['Luna'].map(month_names)
+                    
+                    # Afișează tabela
+                    st.dataframe(monthly_summary, use_container_width=True, hide_index=True)
+                    
+                    # Mesaj pentru Plotly
+                    st.info("""
+                    📊 **Vizualizare grafică indisponibilă**
+                    
+                    Pentru a vedea heatmap-ul interactiv, instalează Plotly:
+                    ```
+                    pip install plotly
+                    ```
+                    
+                    Datele sunt disponibile în tabelul de mai sus.
+                    """)
                 else:
-                    st.info("ℹ️ Nu există suficiente date pentru a genera heatmap-ul.")
+                    st.info("ℹ️ Nu există suficiente date pentru a genera statisticile.")
             except Exception as e:
                 st.warning(f"⚠️ Nu s-au putut genera statisticile: {str(e)}")
         
@@ -2458,11 +2462,11 @@ else:
                             </div>
                             """, unsafe_allow_html=True)
                     
-                    # Grafic evoluție medie
+                    # Afișare date pentru evoluție medie (fără Plotly)
                     st.markdown("##### 📈 Evoluție Medie Clasă")
                     
                     try:
-                        # Date pentru grafic
+                        # Date pentru evoluție
                         cursor = conn.cursor()
                         cursor.execute('''SELECT strftime('%Y-%m', data) as luna, 
                                         AVG(nota) as medie_luna 
@@ -2475,49 +2479,39 @@ else:
                         trend_data = cursor.fetchall()
                         
                         if trend_data:
-                            months = [row[0] for row in trend_data]
-                            averages = [float(row[1]) for row in trend_data]
+                            # Creează un tabel în loc de grafic
+                            trend_df = pd.DataFrame(trend_data, columns=['Luna', 'Medie lunară'])
+                            trend_df['Medie lunară'] = trend_df['Medie lunară'].round(2)
                             
-                            # Creează graficul
-                            fig_trend = go.Figure()
+                            st.dataframe(trend_df, use_container_width=True, hide_index=True)
                             
-                            fig_trend.add_trace(go.Scatter(
-                                x=months,
-                                y=averages,
-                                mode='lines+markers',
-                                name='Medie clasă',
-                                line=dict(color='#3b82f6', width=3),
-                                marker=dict(size=8, color='#2563eb')
-                            ))
+                            # Calculează tendința
+                            if len(trend_df) > 1:
+                                first_avg = trend_df.iloc[0]['Medie lunară']
+                                last_avg = trend_df.iloc[-1]['Medie lunară']
+                                trend = "↗️ Creștere" if last_avg > first_avg else "↘️ Scădere" if last_avg < first_avg else "➡️ Stabil"
+                                
+                                st.markdown(f"""
+                                <div class="custom-card">
+                                    <p><strong>Tendință generală:</strong> {trend}</p>
+                                    <p><strong>Prima lună:</strong> {first_avg}</p>
+                                    <p><strong>Ultima lună:</strong> {last_avg}</p>
+                                    <p><strong>Diferență:</strong> {last_avg - first_avg:.2f}</p>
+                                </div>
+                                """, unsafe_allow_html=True)
                             
-                            # Linie de tendință
-                            if len(averages) > 1:
-                                z = np.polyfit(range(len(averages)), averages, 1)
-                                p = np.poly1d(z)
-                                fig_trend.add_trace(go.Scatter(
-                                    x=months,
-                                    y=p(range(len(averages))),
-                                    mode='lines',
-                                    name='Tendință',
-                                    line=dict(color='#22c55e', width=2, dash='dash')
-                                ))
+                            st.info("""
+                            📈 **Graficul de evoluție nu este disponibil**
                             
-                            fig_trend.update_layout(
-                                title='Evoluția mediei clasei',
-                                xaxis_title='Lună',
-                                yaxis_title='Medie',
-                                plot_bgcolor='rgba(0,0,0,0)',
-                                paper_bgcolor='rgba(0,0,0,0)',
-                                font_color='white',
-                                height=400,
-                                showlegend=True
-                            )
-                            
-                            st.plotly_chart(fig_trend, use_container_width=True)
+                            Pentru grafice interactive, instalează Plotly:
+                            ```
+                            pip install plotly
+                            ```
+                            """)
                         else:
                             st.info("ℹ️ Nu există suficiente date pentru a afișa evoluția.")
                     except Exception as e:
-                        st.warning(f"⚠️ Eroare la generarea graficului: {str(e)}")
+                        st.warning(f"⚠️ Eroare la generarea statisticilor: {str(e)}")
                     
                     # Descărcare raport PDF (simulat)
                     st.markdown("---")
@@ -2813,7 +2807,7 @@ else:
                     )
                     st.metric("⭐ Purtare", f"{nota_purtare}/10")
                 
-                # Grafic evoluție individuală
+                # Afișare date pentru evoluție individuală (fără Plotly)
                 st.markdown("##### 📈 Evoluție Individuală")
                 
                 try:
@@ -2826,65 +2820,40 @@ else:
                     student_grades = cursor.fetchall()
                     
                     if student_grades:
-                        dates = [datetime.strptime(row[0], "%Y-%m-%d") for row in student_grades]
-                        grades = [float(row[1]) for row in student_grades]
-                        types = [row[2] for row in student_grades]
+                        # Creează un tabel cu notele
+                        grades_df = pd.DataFrame(student_grades, columns=['Data', 'Nota', 'Tip'])
+                        grades_df['Data'] = pd.to_datetime(grades_df['Data']).dt.strftime('%d.%m.%Y')
+                        grades_df['Nota'] = grades_df['Nota'].round(2)
                         
-                        # Culoare după tipul notei
-                        colors = {
-                            'oral': '#3b82f6',
-                            'scris': '#22c55e',
-                            'practical': '#eab308',
-                            'teza': '#ef4444'
-                        }
+                        st.dataframe(grades_df, use_container_width=True, height=300)
                         
-                        fig_student = go.Figure()
+                        # Statistici suplimentare
+                        col_stats1, col_stats2, col_stats3 = st.columns(3)
                         
-                        # Adaugă fiecare tip de notă separat
-                        for tip, color in colors.items():
-                            tip_dates = [dates[i] for i in range(len(types)) if types[i] == tip]
-                            tip_grades = [grades[i] for i in range(len(types)) if types[i] == tip]
-                            
-                            if tip_dates:
-                                fig_student.add_trace(go.Scatter(
-                                    x=tip_dates,
-                                    y=tip_grades,
-                                    mode='markers',
-                                    name=tip.capitalize(),
-                                    marker=dict(size=10, color=color),
-                                    hovertemplate='Data: %{x}<br>Notă: %{y}<br>Tip: ' + tip
-                                ))
+                        with col_stats1:
+                            max_grade = grades_df['Nota'].max()
+                            st.metric("🎯 Nota maximă", f"{max_grade:.2f}")
                         
-                        # Linie pentru medie mobilă (dacă sunt suficiente puncte)
-                        if len(grades) > 2:
-                            window_size = min(5, len(grades))
-                            moving_avg = pd.Series(grades).rolling(window=window_size).mean()
-                            
-                            fig_student.add_trace(go.Scatter(
-                                x=dates,
-                                y=moving_avg,
-                                mode='lines',
-                                name=f'Medie mobilă ({window_size} note)',
-                                line=dict(color='white', width=2, dash='dot')
-                            ))
+                        with col_stats2:
+                            min_grade = grades_df['Nota'].min()
+                            st.metric("📉 Nota minimă", f"{min_grade:.2f}")
                         
-                        fig_student.update_layout(
-                            title=f'Evoluția notelor - {selected_student}',
-                            xaxis_title='Data',
-                            yaxis_title='Notă',
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font_color='white',
-                            height=400,
-                            showlegend=True,
-                            yaxis=dict(range=[1, 10.5])
-                        )
+                        with col_stats3:
+                            std_dev = grades_df['Nota'].std()
+                            st.metric("📊 Deviație standard", f"{std_dev:.2f}" if not pd.isna(std_dev) else "0.00")
                         
-                        st.plotly_chart(fig_student, use_container_width=True)
+                        st.info("""
+                        📈 **Graficul de evoluție nu este disponibil**
+                        
+                        Pentru grafice interactive care arată evoluția notelor în timp, instalează Plotly:
+                        ```
+                        pip install plotly
+                        ```
+                        """)
                     else:
                         st.info(f"ℹ️ {selected_student} nu are note înregistrate la această materie.")
                 except Exception as e:
-                    st.warning(f"⚠️ Eroare la generarea graficului: {str(e)}")
+                    st.warning(f"⚠️ Eroare la generarea statisticilor: {str(e)}")
                 
                 # Recomandări personalizate
                 st.markdown("##### 💡 Recomandări Personalizate")
@@ -3247,47 +3216,31 @@ else:
                     }
                 )
                 
-                # Grafic evoluție note
-                st.markdown("##### 📈 Evoluție Note pe Materii")
+                # Afișare statistici pe materii (fără Plotly)
+                st.markdown("##### 📊 Statistici pe Materii")
                 
                 try:
-                    # Grupează notele pe materii și dată
-                    note_for_chart = note_df.copy()
-                    note_for_chart['data'] = pd.to_datetime(note_for_chart['data'], format='%d.%m.%Y')
+                    # Grupează notele pe materii
+                    materii_stats = note_df.groupby('materie').agg({
+                        'nota': ['count', 'mean', 'min', 'max']
+                    }).round(2)
                     
-                    # Pivot table pentru grafic
-                    pivot_df = note_for_chart.pivot_table(
-                        index='data',
-                        columns='materie',
-                        values='nota',
-                        aggfunc='mean'
-                    ).fillna(method='ffill')
+                    # Redenumire coloane
+                    materii_stats.columns = ['Număr note', 'Medie', 'Nota minimă', 'Nota maximă']
+                    materii_stats = materii_stats.reset_index()
                     
-                    if not pivot_df.empty:
-                        fig_notes = px.line(
-                            pivot_df,
-                            title='Evoluția notelor pe materii',
-                            labels={'value': 'Notă', 'variable': 'Materie'}
-                        )
-                        
-                        fig_notes.update_layout(
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font_color='white',
-                            height=400,
-                            showlegend=True,
-                            legend=dict(
-                                orientation="h",
-                                yanchor="bottom",
-                                y=1.02,
-                                xanchor="right",
-                                x=1
-                            )
-                        )
-                        
-                        st.plotly_chart(fig_notes, use_container_width=True)
+                    st.dataframe(materii_stats, use_container_width=True, hide_index=True)
+                    
+                    st.info("""
+                    📈 **Graficele interactive nu sunt disponibile**
+                    
+                    Pentru a vedea grafice de evoluție și distribuție, instalează Plotly:
+                    ```
+                    pip install plotly
+                    ```
+                    """)
                 except Exception as e:
-                    st.warning(f"⚠️ Nu s-a putut genera graficul: {str(e)}")
+                    st.warning(f"⚠️ Nu s-a putut genera tabelul de statistici: {str(e)}")
                 
                 # Export note
                 st.markdown("---")
@@ -3389,38 +3342,30 @@ else:
                     }
                 )
                 
-                # Grafic absențe pe materii
+                # Statistici pe materii (fără Plotly)
                 st.markdown("##### 📊 Distribuție Absențe pe Materii")
                 
                 try:
                     # Grupează absențele pe materii
-                    abs_by_subject = absente_df.groupby('materie').size().reset_index(name='numar_absente')
+                    abs_by_subject = absente_df.groupby('materie').agg({
+                        'motivata': ['count', 'sum']
+                    }).reset_index()
                     
-                    if not abs_by_subject.empty:
-                        fig_abs = px.pie(
-                            abs_by_subject,
-                            values='numar_absente',
-                            names='materie',
-                            title='Distribuția absențelor pe materii',
-                            hole=0.4
-                        )
-                        
-                        fig_abs.update_layout(
-                            plot_bgcolor='rgba(0,0,0,0)',
-                            paper_bgcolor='rgba(0,0,0,0)',
-                            font_color='white',
-                            height=400,
-                            showlegend=True
-                        )
-                        
-                        fig_abs.update_traces(
-                            textposition='inside',
-                            textinfo='percent+label'
-                        )
-                        
-                        st.plotly_chart(fig_abs, use_container_width=True)
+                    abs_by_subject.columns = ['Materie', 'Total absențe', 'Motivate']
+                    abs_by_subject['Nemotivate'] = abs_by_subject['Total absențe'] - abs_by_subject['Motivate']
+                    
+                    st.dataframe(abs_by_subject, use_container_width=True, hide_index=True)
+                    
+                    st.info("""
+                    📊 **Graficul circular nu este disponibil**
+                    
+                    Pentru a vedea graficul de distribuție al absențelor, instalează Plotly:
+                    ```
+                    pip install plotly
+                    ```
+                    """)
                 except Exception as e:
-                    st.warning(f"⚠️ Nu s-a putut genera graficul: {str(e)}")
+                    st.warning(f"⚠️ Nu s-a putut genera tabelul de statistici: {str(e)}")
                 
                 # Export absențe
                 st.markdown("---")
@@ -3470,6 +3415,903 @@ else:
             if observatii:
                 # Statistici observații
                 total_obs = len(observatii)
-                laud
+                laudă_count = sum(1 for o in observatii if o[3] == 'laudă')
+                atenționare_count = sum(1 for o in observatii if o[3] == 'atenționare')
+                mustrare_count = sum(1 for o in observatii if o[3] == 'mustrare')
+                recomandare_count = sum(1 for o in observatii if o[3] == 'recomandare')
+                
+                col_obs_stat1, col_obs_stat2, col_obs_stat3, col_obs_stat4, col_obs_stat5 = st.columns(5)
+                
+                with col_obs_stat1:
+                    st.metric("📋 Total", total_obs)
+                
+                with col_obs_stat2:
+                    st.metric("👏 Laudă", laudă_count)
+                
+                with col_obs_stat3:
+                    st.metric("⚠️ Atenționare", atenționare_count)
+                
+                with col_obs_stat4:
+                    st.metric("❌ Mustrare", mustrare_count)
+                
+                with col_obs_stat5:
+                    st.metric("💡 Recomandare", recomandare_count)
+                
+                # Afișează observațiile
+                for obs in observatii:
+                    data_obs, materie_obs, text_obs, tip_obs, profesor_obs, gravitate_obs, rezolvata_obs = obs
+                    
+                    # Determină culoarea în funcție de tip
+                    if tip_obs == 'laudă':
+                        bg_color = "rgba(34, 197, 94, 0.1)"
+                        border_color = "rgba(34, 197, 94, 0.3)"
+                        badge_color = "success"
+                    elif tip_obs == 'atenționare':
+                        bg_color = "rgba(234, 179, 8, 0.1)"
+                        border_color = "rgba(234, 179, 8, 0.3)"
+                        badge_color = "warning"
+                    elif tip_obs == 'mustrare':
+                        bg_color = "rgba(239, 68, 68, 0.1)"
+                        border_color = "rgba(239, 68, 68, 0.3)"
+                        badge_color = "danger"
+                    else:  # recomandare
+                        bg_color = "rgba(59, 130, 246, 0.1)"
+                        border_color = "rgba(59, 130, 246, 0.3)"
+                        badge_color = "info"
+                    
+                    st.markdown(f"""
+                    <div class="custom-card" style="background: {bg_color}; border-color: {border_color};">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h4 style="margin: 0 0 10px 0;">
+                                    <span class="badge badge-{badge_color}">{tip_obs.upper()}</span>
+                                    {materie_obs}
+                                </h4>
+                                <p style="margin: 0; color: white;">{text_obs}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="margin: 0; color: #94a3b8; font-size: 0.9rem;">
+                                    {datetime.strptime(data_obs, "%Y-%m-%d").strftime("%d.%m.%Y")}<br>
+                                    <small>Prof. {profesor_obs}</small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Nu există observații înregistrate pentru criteriile selectate.")
+        
+        with tab_medii:
+            st.markdown("### 📊 Medii pe Materii")
+            
+            # Calcul medii pentru fiecare materie
+            cursor = conn.cursor()
+            
+            # Obține toate materiile cu note
+            cursor.execute('''SELECT DISTINCT materie 
+                            FROM grades 
+                            WHERE nume = ? 
+                            ORDER BY materie''',
+                         (elev,))
+            materii = cursor.fetchall()
+            
+            if materii:
+                medii_data = []
+                
+                for materie_row in materii:
+                    materie = materie_row[0]
+                    
+                    # Medie semestrul 1
+                    cursor.execute('''SELECT AVG(nota) 
+                                    FROM grades 
+                                    WHERE nume = ? AND materie = ? AND semestru = 1''',
+                                 (elev, materie))
+                    medie_sem1 = cursor.fetchone()[0]
+                    
+                    # Medie semestrul 2
+                    cursor.execute('''SELECT AVG(nota) 
+                                    FROM grades 
+                                    WHERE nume = ? AND materie = ? AND semestru = 2''',
+                                 (elev, materie))
+                    medie_sem2 = cursor.fetchone()[0]
+                    
+                    # Medie anuală
+                    if medie_sem1 and medie_sem2:
+                        medie_anuala = (medie_sem1 + medie_sem2) / 2
+                    elif medie_sem1:
+                        medie_anuala = medie_sem1
+                    elif medie_sem2:
+                        medie_anuala = medie_sem2
+                    else:
+                        medie_anuala = None
+                    
+                    # Determină situația
+                    if medie_anuala:
+                        if medie_anuala >= 5.00:
+                            situatie = "Promovat"
+                            badge_color = "success"
+                        else:
+                            situatie = "Corigență"
+                            badge_color = "danger"
+                    else:
+                        situatie = "Fără note"
+                        badge_color = "warning"
+                    
+                    medii_data.append({
+                        'Materie': materie,
+                        'Medie Sem 1': round(medie_sem1, 2) if medie_sem1 else "-",
+                        'Medie Sem 2': round(medie_sem2, 2) if medie_sem2 else "-",
+                        'Medie Anuală': round(medie_anuala, 2) if medie_anuala else "-",
+                        'Situație': situatie,
+                        'badge_color': badge_color
+                    })
+                
+                # Creează DataFrame
+                medii_df = pd.DataFrame(medii_data)
+                
+                # Afișează tabela
+                st.dataframe(
+                    medii_df[['Materie', 'Medie Sem 1', 'Medie Sem 2', 'Medie Anuală', 'Situație']],
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Calcul medie generală
+                medii_valide = [m['Medie Anuală'] for m in medii_data if isinstance(m['Medie Anuală'], (int, float))]
+                if medii_valide:
+                    medie_generala = sum(medii_valide) / len(medii_valide)
+                    
+                    col_med_gen1, col_med_gen2, col_med_gen3 = st.columns(3)
+                    
+                    with col_med_gen1:
+                        st.metric("🎓 Medie generală", f"{medie_generala:.2f}")
+                    
+                    with col_med_gen2:
+                        materii_promovate = sum(1 for m in medii_data if m['Situație'] == 'Promovat')
+                        st.metric("✅ Materii promovate", f"{materii_promovate}/{len(medii_data)}")
+                    
+                    with col_med_gen3:
+                        if medie_generala >= 9.00:
+                            mențiune = "FOARTE BINE"
+                            mențiune_color = "#3b82f6"
+                        elif medie_generala >= 8.00:
+                            mențiune = "BINE"
+                            mențiune_color = "#22c55e"
+                        elif medie_generala >= 7.00:
+                            mențiune = "SUFICIENT"
+                            mențiune_color = "#eab308"
+                        else:
+                            mențiune = "FĂRĂ MENȚIUNE"
+                            mențiune_color = "#ef4444"
+                        
+                        st.markdown(f"""
+                        <div style="text-align: center;">
+                            <h4 style="color: {mențiune_color}; margin: 0;">{mențiune}</h4>
+                            <p style="color: #94a3b8; margin: 0; font-size: 0.9rem;">Mențiune</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Nu există note înregistrate pentru calcularea mediilor.")
+        
+        with tab_purtare:
+            st.markdown("### ⭐ Nota de Purtare")
+            
+            # Obține nota curentă de purtare
+            nota_purtare_sem1 = get_nota_purtare_curenta(elev, conn, 1)
+            nota_purtare_sem2 = get_nota_purtare_curenta(elev, conn, 2)
+            
+            col_purt1, col_purt2, col_purt3 = st.columns(3)
+            
+            with col_purt1:
+                st.metric("Semestrul 1", f"{nota_purtare_sem1}/10")
+            
+            with col_purt2:
+                st.metric("Semestrul 2", f"{nota_purtare_sem2}/10")
+            
+            with col_purt3:
+                # Medie anuală purtare
+                if nota_purtare_sem1 and nota_purtare_sem2:
+                    medie_purtare = (nota_purtare_sem1 + nota_purtare_sem2) / 2
+                elif nota_purtare_sem1:
+                    medie_purtare = nota_purtare_sem1
+                elif nota_purtare_sem2:
+                    medie_purtare = nota_purtare_sem2
+                else:
+                    medie_purtare = 10  # Default
+                
+                st.metric("Medie anuală", f"{medie_purtare:.1f}/10")
+            
+            # Istoric modificări purtare
+            st.markdown("##### 📝 Istoric modificări")
+            
+            cursor = conn.cursor()
+            cursor.execute('''SELECT data_modificare, nota, motiv, profesor 
+                            FROM purtare 
+                            WHERE nume = ? 
+                            ORDER BY data_modificare DESC''',
+                         (elev,))
+            
+            istoric_purtare = cursor.fetchall()
+            
+            if istoric_purtare:
+                for data_mod, nota, motiv, profesor in istoric_purtare:
+                    data_format = datetime.strptime(data_mod, "%Y-%m-%d").strftime("%d.%m.%Y")
+                    
+                    # Determină iconița în funcție de modificare
+                    if nota >= 9:
+                        icon = "⭐"
+                        color = "#22c55e"
+                    elif nota >= 7:
+                        icon = "👍"
+                        color = "#eab308"
+                    else:
+                        icon = "⚠️"
+                        color = "#ef4444"
+                    
+                    st.markdown(f"""
+                    <div class="custom-card" style="padding: 15px !important;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 2rem; color: {color};">{icon}</div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0; color: white;">Nota: {nota}/10</h4>
+                                <p style="margin: 5px 0 0 0; color: #94a3b8;">
+                                    <strong>Motiv:</strong> {motiv}<br>
+                                    <small>Modificat de Prof. {profesor} la {data_format}</small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Nu există modificări înregistrate pentru nota de purtare.")
+        
+        with tab_activitati:
+            st.markdown("### 🎨 Activități Extrașcolare")
+            
+            # Verifică dacă elevul are activități înregistrate
+            cursor = conn.cursor()
+            cursor.execute('''SELECT tip_activitate, denumire, data_inceput, data_sfarsit, realizari, mentiuni 
+                            FROM activitati 
+                            WHERE nume = ? 
+                            ORDER BY data_inceput DESC''',
+                         (elev,))
+            
+            activitati_elev = cursor.fetchall()
+            
+            if activitati_elev:
+                for activitate in activitati_elev:
+                    tip, denumire, data_inceput, data_sfarsit, realizari, mentiuni = activitate
+                    
+                    # Formatează datele
+                    data_inceput_fmt = datetime.strptime(data_inceput, "%Y-%m-%d").strftime("%d.%m.%Y") if data_inceput else "Nespecificat"
+                    data_sfarsit_fmt = datetime.strptime(data_sfarsit, "%Y-%m-%d").strftime("%d.%m.%Y") if data_sfarsit else "Prezent"
+                    
+                    # Determină iconița în funcție de tip
+                    icon_map = {
+                        'sport': '⚽',
+                        'artistic': '🎨',
+                        'cultural': '🎭',
+                        'voluntariat': '🤝',
+                        'competitie': '🏆',
+                        'proiect': '📋'
+                    }
+                    
+                    icon = icon_map.get(tip.lower(), '🎯')
+                    
+                    st.markdown(f"""
+                    <div class="custom-card">
+                        <div style="display: flex; align-items: start; gap: 15px;">
+                            <div style="font-size: 2.5rem;">{icon}</div>
+                            <div style="flex: 1;">
+                                <h4 style="margin: 0 0 10px 0; color: white;">{denumire}</h4>
+                                <p style="margin: 0 0 5px 0; color: #94a3b8;">
+                                    <strong>Tip:</strong> {tip} | 
+                                    <strong>Perioadă:</strong> {data_inceput_fmt} - {data_sfarsit_fmt}
+                                </p>
+                                {f'<p style="margin: 5px 0; color: white;"><strong>Realizări:</strong> {realizari}</p>' if realizari else ''}
+                                {f'<p style="margin: 5px 0; color: #94a3b8;"><strong>Mențiuni:</strong> {mentiuni}</p>' if mentiuni else ''}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Nu există activități extrașcolare înregistrate.")
+    
+    # ============================================
+    # 12. INTERFAȚA DIRECTOARE - MODUL ADMINISTRATIV
+    # ============================================
+    else:  # role == "admin"
+        st.markdown("## 🏛️ Panou Administrativ - Directoare")
+        
+        # Tabs pentru diferite funcționalități administrative
+        tab_overview, tab_statistici, tab_gestionare, tab_rapoarte, tab_sistem = st.tabs([
+            "📊 Overview", 
+            "📈 Statistici", 
+            "👥 Gestionare", 
+            "📋 Rapoarte", 
+            "⚙️ Sistem"
+        ])
+        
+        with tab_overview:
+            st.markdown("### 🎓 Overview Sistem")
+            
+            col_admin1, col_admin2, col_admin3, col_admin4 = st.columns(4)
+            
+            with col_admin1:
+                # Total elevi
+                total_elevi = sum(len(studenti) for studenti in CLASE.values())
+                st.metric("👥 Total elevi", total_elevi)
+            
+            with col_admin2:
+                # Total profesori
+                total_profesori = len(PROFESORI)
+                st.metric("👨‍🏫 Total profesori", total_profesori)
+            
+            with col_admin3:
+                # Total note în sistem
+                total_note_sistem = pd.read_sql("SELECT COUNT(*) FROM grades", conn).iloc[0,0]
+                st.metric("📝 Total note", total_note_sistem)
+            
+            with col_admin4:
+                # Total absențe în sistem
+                total_absente_sistem = pd.read_sql("SELECT COUNT(*) FROM absente", conn).iloc[0,0]
+                st.metric("❌ Total absențe", total_absente_sistem)
+            
+            # Statistici pe clase
+            st.markdown("##### 📊 Statistici pe Clase")
+            
+            clase_stats = []
+            for clasa_nume, elevi_clasa in CLASE.items():
+                if elevi_clasa:  # Doar clasele cu elevi
+                    # Note pe clasă
+                    cursor = conn.cursor()
+                    cursor.execute('''SELECT COUNT(*), AVG(nota) 
+                                    FROM grades 
+                                    WHERE clasa = ?''',
+                                 (clasa_nume,))
+                    count_note, medie_note = cursor.fetchone()
+                    
+                    # Absențe pe clasă
+                    cursor.execute('''SELECT COUNT(*) 
+                                    FROM absente 
+                                    WHERE clasa = ?''',
+                                 (clasa_nume,))
+                    count_absente = cursor.fetchone()[0]
+                    
+                    clase_stats.append({
+                        'Clasa': clasa_nume,
+                        'Elevi': len(elevi_clasa),
+                        'Note': count_note or 0,
+                        'Medie': round(medie_note, 2) if medie_note else 0,
+                        'Absențe': count_absente or 0
+                    })
+            
+            if clase_stats:
+                clase_df = pd.DataFrame(clase_stats)
+                st.dataframe(clase_df, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ Nu există date suficiente pentru statisticile pe clase.")
+            
+            # Activități recente
+            st.markdown("##### 📅 Activități Recente")
+            
+            cursor = conn.cursor()
+            cursor.execute('''SELECT 
+                                CASE 
+                                    WHEN tabela = 'grades' THEN '📝 Notă adăugată'
+                                    WHEN tabela = 'absente' THEN '❌ Absență înregistrată'
+                                    WHEN tabela = 'observatii' THEN '📋 Observație adăugată'
+                                    ELSE '📊 Altă activitate'
+                                END as activitate,
+                                utilizator,
+                                created_at
+                            FROM istoric_modificari 
+                            ORDER BY created_at DESC 
+                            LIMIT 10''')
+            
+            activitati_recente = cursor.fetchall()
+            
+            if activitati_recente:
+                for activitate, utilizator, data_activitate in activitati_recente:
+                    data_fmt = datetime.strptime(data_activitate, "%Y-%m-%d %H:%M:%S").strftime("%d.%m.%Y %H:%M")
+                    st.markdown(f"""
+                    <div class="custom-card" style="padding: 10px !important; margin: 5px 0 !important;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>{activitate}</strong><br>
+                                <small style="color: #94a3b8;">Utilizator: {utilizator}</small>
+                            </div>
+                            <div style="color: #64748b; font-size: 0.9rem;">
+                                {data_fmt}
+                            </div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("ℹ️ Nu există activități recente înregistrate.")
+        
+        with tab_statistici:
+            st.markdown("### 📈 Statistici Avansate")
+            
+            # Selectare clasă pentru statistici detaliate
+            clasa_selectata_admin = st.selectbox(
+                "Selectează clasa pentru statistici detaliate:",
+                list(CLASE.keys()),
+                key="admin_clasa_select"
+            )
+            
+            if clasa_selectata_admin and CLASE[clasa_selectata_admin]:
+                elevi_clasa = CLASE[clasa_selectata_admin]
+                
+                st.markdown(f"#### 📊 Statistici pentru clasa {clasa_selectata_admin}")
+                
+                # Statistici generale
+                col_stat_gen1, col_stat_gen2, col_stat_gen3 = st.columns(3)
+                
+                with col_stat_gen1:
+                    # Medie generală clasă
+                    cursor = conn.cursor()
+                    cursor.execute('''SELECT AVG(nota) 
+                                    FROM grades 
+                                    WHERE clasa = ?''',
+                                 (clasa_selectata_admin,))
+                    medie_generala_clasa = cursor.fetchone()[0]
+                    st.metric("🎓 Medie generală clasă", f"{medie_generala_clasa:.2f}" if medie_generala_clasa else "0.00")
+                
+                with col_stat_gen2:
+                    # Procentaj promovare
+                    # Aici ar trebui o logică mai complexă bazată pe mediile anuale
+                    st.metric("✅ Rate promovare", "95%")  # Exemplu
+                
+                with col_stat_gen3:
+                    # Absenteism
+                    cursor.execute('''SELECT COUNT(*) 
+                                    FROM absente 
+                                    WHERE clasa = ?''',
+                                 (clasa_selectata_admin,))
+                    total_absente_clasa = cursor.fetchone()[0] or 0
+                    rata_absenteism = (total_absente_clasa / (len(elevi_clasa) * 180)) * 100  # 180 zile de școală
+                    st.metric("📉 Rata absenteism", f"{rata_absenteism:.1f}%")
+                
+                # Top elevi
+                st.markdown("##### 🏆 Top Elevi")
+                
+                top_elevi = []
+                for elev in elevi_clasa:
+                    cursor.execute('''SELECT AVG(nota) 
+                                    FROM grades 
+                                    WHERE nume = ?''',
+                                 (elev,))
+                    medie_elev = cursor.fetchone()[0]
+                    
+                    if medie_elev:
+                        top_elevi.append({
+                            'Elev': elev,
+                            'Medie': round(medie_elev, 2)
+                        })
+                
+                if top_elevi:
+                    top_elevi.sort(key=lambda x: x['Medie'], reverse=True)
+                    top_df = pd.DataFrame(top_elevi[:10])  # Primele 10
+                    
+                    st.dataframe(top_df, use_container_width=True, hide_index=True)
+                else:
+                    st.info("ℹ️ Nu există suficiente date pentru a afișa topul elevilor.")
+                
+                # Materii cu cele mai multe note
+                st.markdown("##### 📚 Activități pe Materii")
+                
+                cursor.execute('''SELECT materie, COUNT(*) as numar_note, AVG(nota) as medie_materie
+                                FROM grades 
+                                WHERE clasa = ? 
+                                GROUP BY materie 
+                                ORDER BY numar_note DESC''',
+                             (clasa_selectata_admin,))
+                
+                materii_stats = cursor.fetchall()
+                
+                if materii_stats:
+                    materii_df = pd.DataFrame(materii_stats, columns=['Materie', 'Număr note', 'Medie'])
+                    materii_df['Medie'] = materii_df['Medie'].round(2)
+                    
+                    st.dataframe(materii_df, use_container_width=True, hide_index=True)
+                else:
+                    st.info("ℹ️ Nu există date pentru activitățile pe materii.")
+            else:
+                st.warning(f"⚠️ Clasa {clasa_selectata_admin} nu are elevi înregistrați.")
+        
+        with tab_gestionare:
+            st.markdown("### 👥 Gestionare Utilizatori")
+            
+            gestionare_tab1, gestionare_tab2 = st.tabs(["👨‍🏫 Profesori", "👤 Elevi"])
+            
+            with gestionare_tab1:
+                st.markdown("##### 🎓 Lista Profesori")
+                
+                # Afișează lista profesorilor
+                prof_df = pd.DataFrame([
+                    {
+                        'Nume': nume,
+                        'Materie': detalii['materie'],
+                        'Email': detalii['email'],
+                        'Telefon': detalii['telefon'],
+                        'Experiență': f"{detalii['ani_experienta']} ani"
+                    }
+                    for nume, detalii in PROFESORI.items()
+                ])
+                
+                st.dataframe(prof_df, use_container_width=True, hide_index=True)
+                
+                # Adăugare profesor nou
+                st.markdown("##### ➕ Adăugare Profesor Nou")
+                
+                with st.form(key="form_adaugare_profesor"):
+                    col_prof_nume, col_prof_materie = st.columns(2)
+                    
+                    with col_prof_nume:
+                        nume_prof_nou = st.text_input("Nume profesor:")
+                    
+                    with col_prof_materie:
+                        materie_prof_nou = st.selectbox("Materie:", MATERII_GIMNAZIU)
+                    
+                    col_prof_email, col_prof_tel = st.columns(2)
+                    
+                    with col_prof_email:
+                        email_prof_nou = st.text_input("Email:")
+                    
+                    with col_prof_tel:
+                        telefon_prof_nou = st.text_input("Telefon:")
+                    
+                    parola_prof_nou = st.text_input("Parolă:", type="password")
+                    
+                    if st.form_submit_button("➕ Adaugă Profesor"):
+                        if nume_prof_nou and materie_prof_nou and parola_prof_nou:
+                            # Aici s-ar face adăugarea în baza de date
+                            st.success(f"✅ Profesorul {nume_prof_nou} a fost adăugat cu succes!")
+                        else:
+                            st.error("❌ Completează toate câmpurile obligatorii!")
+            
+            with gestionare_tab2:
+                st.markdown("##### 👥 Lista Elevi")
+                
+                # Afișează lista elevilor
+                elevi_lista = []
+                for clasa_nume, elevi_clasa in CLASE.items():
+                    for elev in elevi_clasa:
+                        detalii = ELEVI.get(elev, {})
+                        elevi_lista.append({
+                            'Nume': elev,
+                            'Clasa': clasa_nume,
+                            'Data nașterii': detalii.get('data_nasterii', 'N/A'),
+                            'Telefon părinte': detalii.get('telefon_parinte', 'N/A')
+                        })
+                
+                if elevi_lista:
+                    elevi_df = pd.DataFrame(elevi_lista)
+                    st.dataframe(elevi_df, use_container_width=True, hide_index=True)
+                else:
+                    st.info("ℹ️ Nu există elevi înregistrați în sistem.")
+                
+                # Transfer elev între clase
+                st.markdown("##### 🔄 Transfer Elev")
+                
+                if elevi_lista:
+                    col_transfer_elev, col_transfer_clasa = st.columns(2)
+                    
+                    with col_transfer_elev:
+                        elev_transfer = st.selectbox(
+                            "Selectează elev:",
+                            [e['Nume'] for e in elevi_lista]
+                        )
+                    
+                    with col_transfer_clasa:
+                        clasa_noua = st.selectbox(
+                            "Clasa nouă:",
+                            list(CLASE.keys())
+                        )
+                    
+                    if st.button("🔄 Transferă elev", use_container_width=True):
+                        # Aici s-ar face transferul efectiv
+                        st.success(f"✅ Elevul {elev_transfer} a fost transferat în clasa {clasa_noua}!")
+                else:
+                    st.warning("⚠️ Nu există elevi disponibili pentru transfer.")
+        
+        with tab_rapoarte:
+            st.markdown("### 📋 Generare Rapoarte")
+            
+            col_raport_tip, col_raport_perioada = st.columns(2)
+            
+            with col_raport_tip:
+                tip_raport = st.selectbox(
+                    "Tip raport:",
+                    ["Raport general școală", "Raport pe clasă", "Raport pe profesor", 
+                     "Raport absenteism", "Raport performanță"]
+                )
+            
+            with col_raport_perioada:
+                perioada_raport = st.selectbox(
+                    "Perioadă:",
+                    ["Acest an școlar", "Semestrul 1", "Semestrul 2", "Ultima lună", "Personalizată"]
+                )
+            
+            # Opțiuni specifice în funcție de tipul de raport
+            if tip_raport == "Raport pe clasă":
+                clasa_raport = st.selectbox("Selectează clasa:", list(CLASE.keys()))
+            elif tip_raport == "Raport pe profesor":
+                profesor_raport = st.selectbox("Selectează profesor:", list(PROFESORI.keys()))
+            
+            # Generare raport
+            if st.button("📄 Generează Raport", type="primary", use_container_width=True):
+                with st.spinner("Generare raport în curs..."):
+                    time.sleep(2)
+                    
+                    # Simulare generare raport
+                    st.success("✅ Raportul a fost generat cu succes!")
+                    
+                    # Afișează preview raport
+                    st.markdown("""
+                    <div class="custom-card">
+                        <h4>📋 Preview Raport</h4>
+                        <p><strong>Tip raport:</strong> {}</p>
+                        <p><strong>Perioadă:</strong> {}</p>
+                        <p><strong>Data generare:</strong> {}</p>
+                        <p><strong>Statistici incluse:</strong></p>
+                        <ul>
+                            <li>Date generale școală</li>
+                            <li>Performanță academică</li>
+                            <li>Analiză absenteism</li>
+                            <li>Recomandări și concluzii</li>
+                        </ul>
+                    </div>
+                    """.format(tip_raport, perioada_raport, datetime.now().strftime("%d.%m.%Y %H:%M")), 
+                    unsafe_allow_html=True)
+                    
+                    # Butoane export
+                    col_export_pdf, col_export_excel = st.columns(2)
+                    
+                    with col_export_pdf:
+                        st.download_button(
+                            label="📥 Descarcă PDF",
+                            data="Simulated PDF content",
+                            file_name=f"raport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                            mime="application/pdf"
+                        )
+                    
+                    with col_export_excel:
+                        st.download_button(
+                            label="📊 Descarcă Excel",
+                            data="Simulated Excel content",
+                            file_name=f"raport_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        )
+        
+        with tab_sistem:
+            st.markdown("### ⚙️ Setări și Configurare Sistem")
+            
+            sist_tab1, sist_tab2, sist_tab3 = st.tabs(["🔧 Configurare", "💾 Backup", "📊 Monitorizare"])
+            
+            with sist_tab1:
+                st.markdown("##### ⚙️ Configurare Sistem")
+                
+                col_sys1, col_sys2 = st.columns(2)
+                
+                with col_sys1:
+                    # Setări generale
+                    st.markdown("**Setări generale**")
+                    
+                    an_scolar = st.text_input("An școlar:", value="2025-2026")
+                    data_inceput = st.date_input("Data început an școlar:", value=date(2025, 9, 1))
+                    data_sfarsit = st.date_input("Data sfârșit an școlar:", value=date(2026, 6, 30))
+                    
+                    # Setări evaluare
+                    st.markdown("**Setări evaluare**")
+                    
+                    nr_min_note = st.number_input("Număr minim note/semestru:", min_value=1, max_value=10, value=3)
+                    nota_promovare = st.number_input("Notă minimă promovare:", min_value=1.0, max_value=10.0, value=5.0, step=0.5)
+                
+                with col_sys2:
+                    # Setări securitate
+                    st.markdown("**Setări securitate**")
+                    
+                    expirare_parola = st.number_input("Expirare parolă (zile):", min_value=30, max_value=365, value=90)
+                    blocare_incercari = st.number_input("Încercări eșuate până la blocare:", min_value=3, max_value=10, value=5)
+                    log_activitati = st.toggle("Log activități utilizatori", value=True)
+                    
+                    # Setări notificări
+                    st.markdown("**Setări notificări**")
+                    
+                    notificari_email = st.toggle("Notificări email", value=True)
+                    notificari_sms = st.toggle("Notificări SMS", value=False)
+                    alerta_absente = st.number_input("Alertă la numărul de absențe:", min_value=1, max_value=20, value=5)
+                
+                if st.button("💾 Salvează configurare", type="primary", use_container_width=True):
+                    st.success("✅ Configurația sistemului a fost salvată cu succes!")
+            
+            with sist_tab2:
+                st.markdown("##### 💾 Backup și Restaurare")
+                
+                col_backup1, col_backup2 = st.columns(2)
+                
+                with col_backup1:
+                    st.markdown("**Creează backup**")
+                    
+                    descriere_backup = st.text_area("Descriere backup:", placeholder="Descrie scopul acestui backup...")
+                    
+                    if st.button("💾 Creează backup complet", use_container_width=True):
+                        with st.spinner("Creare backup în curs..."):
+                            time.sleep(3)
+                            
+                            # Simulare backup
+                            backup_info = {
+                                'data_creare': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                'descriere': descriere_backup,
+                                'dimensiune': "~15.7 MB",
+                                'tabele_incluse': 8,
+                                'inregistrari': total_note_sistem + total_absente_sistem
+                            }
+                            
+                            st.success("✅ Backup creat cu succes!")
+                            
+                            # Afișează detalii backup
+                            st.markdown(f"""
+                            <div class="custom-card">
+                                <h4>📦 Backup creat</h4>
+                                <p><strong>Data creare:</strong> {backup_info['data_creare']}</p>
+                                <p><strong>Descriere:</strong> {backup_info['descriere'] or 'Niciuna'}</p>
+                                <p><strong>Dimensiune:</strong> {backup_info['dimensiune']}</p>
+                                <p><strong>Tabele incluse:</strong> {backup_info['tabele_incluse']}</p>
+                                <p><strong>Înregistrări:</strong> {backup_info['inregistrari']:,}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                
+                with col_backup2:
+                    st.markdown("**Restaurare backup**")
+                    
+                    uploaded_backup = st.file_uploader("Încarcă fișier backup:", type=['sql', 'db', 'backup'])
+                    
+                    if uploaded_backup is not None:
+                        st.warning("""
+                        ⚠️ **Atenție!** Restaurarea unui backup va suprascrie toate datele curente.
+                        
+                        Asigură-te că:
+                        1. Ai un backup recent al datelor curente
+                        2. Înțelegi că toate modificările făcute după backup vor fi pierdute
+                        3. Ai permisiunile necesare pentru această operațiune
+                        """)
+                        
+                        col_confirm1, col_confirm2 = st.columns(2)
+                        
+                        with col_confirm1:
+                            if st.button("🔄 Confirmă restaurare", type="secondary", use_container_width=True):
+                                with st.spinner("Restaurare în curs..."):
+                                    time.sleep(3)
+                                    st.success("✅ Backup restaurat cu succes!")
+                                    st.info("ℹ️ Este necesară reîncărcarea aplicației.")
+                        
+                        with col_confirm2:
+                            if st.button("❌ Anulează", use_container_width=True):
+                                st.info("Operațiune anulată.")
+            
+            with sist_tab3:
+                st.markdown("##### 📊 Monitorizare Sistem")
+                
+                # Statistici utilizare
+                col_mon1, col_mon2, col_mon3 = st.columns(3)
+                
+                with col_mon1:
+                    # Utilizatori activi
+                    cursor = conn.cursor()
+                    cursor.execute('''SELECT COUNT(DISTINCT utilizator) 
+                                    FROM istoric_modificari 
+                                    WHERE DATE(created_at) = DATE('now')''')
+                    utilizatori_activi = cursor.fetchone()[0] or 0
+                    st.metric("👥 Utilizatori activi azi", utilizatori_activi)
+                
+                with col_mon2:
+                    # Operațiuni azi
+                    cursor.execute('''SELECT COUNT(*) 
+                                    FROM istoric_modificari 
+                                    WHERE DATE(created_at) = DATE('now')''')
+                    operatii_azi = cursor.fetchone()[0] or 0
+                    st.metric("🔄 Operațiuni azi", operatii_azi)
+                
+                with col_mon3:
+                    # Dimensiune baza de date
+                    # Aceasta este o aproximare
+                    dimensiune_mb = (total_note_sistem * 0.1 + total_absente_sistem * 0.05) / 1024
+                    st.metric("💾 Dimensiune baza de date", f"{dimensiune_mb:.2f} MB")
+                
+                # Loguri sistem
+                st.markdown("##### 📝 Loguri Sistem")
+                
+                cursor.execute('''SELECT created_at, actiune, utilizator, tabela 
+                                FROM istoric_modificari 
+                                ORDER BY created_at DESC 
+                                LIMIT 20''')
+                
+                loguri = cursor.fetchall()
+                
+                if loguri:
+                    for log in loguri:
+                        data_log, actiune, utilizator, tabela = log
+                        data_fmt = datetime.strptime(data_log, "%Y-%m-%d %H:%M:%S").strftime("%d.%m.%Y %H:%M")
+                        
+                        # Determină iconița
+                        if 'INSERT' in actiune:
+                            icon = "➕"
+                            color = "#22c55e"
+                        elif 'UPDATE' in actiune:
+                            icon = "✏️"
+                            color = "#eab308"
+                        elif 'DELETE' in actiune:
+                            icon = "🗑️"
+                            color = "#ef4444"
+                        else:
+                            icon = "📝"
+                            color = "#3b82f6"
+                        
+                        st.markdown(f"""
+                        <div class="custom-card" style="padding: 10px !important; margin: 5px 0 !important; border-left: 4px solid {color};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="font-size: 1.2rem; color: {color};">{icon}</div>
+                                    <div>
+                                        <strong>{actiune}</strong><br>
+                                        <small style="color: #94a3b8;">Tabela: {tabela} | Utilizator: {utilizator}</small>
+                                    </div>
+                                </div>
+                                <div style="color: #64748b; font-size: 0.9rem;">
+                                    {data_fmt}
+                                </div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("ℹ️ Nu există loguri înregistrate.")
+                
+                # Buton pentru curățare loguri vechi
+                if st.button("🧹 Curăță loguri vechi", type="secondary", use_container_width=True):
+                    cursor.execute('''DELETE FROM istoric_modificari 
+                                    WHERE DATE(created_at) < DATE('now', '-30 days')''')
+                    conn.commit()
+                    st.success("✅ Logurile mai vechi de 30 de zile au fost șterse!")
 
+# ============================================
+# 13. FOOTER ȘI INFORMAȚII SISTEM
+# ============================================
 
+# Footer doar pentru paginile după login
+if st.session_state.logged_in:
+    st.markdown("---")
+    
+    col_footer_left, col_footer_center, col_footer_right = st.columns(3)
+    
+    with col_footer_left:
+        st.markdown("""
+        <div style="text-align: center;">
+            <p style="color: #64748b; font-size: 0.9rem;">
+                <strong>🎓 Catalog Digital 2026</strong><br>
+                Versiunea 6.0 Premium
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_footer_center:
+        st.markdown("""
+        <div style="text-align: center;">
+            <p style="color: #64748b; font-size: 0.9rem;">
+                <strong>📅 Anul școlar 2025-2026</strong><br>
+                Septembrie 2025 - Iunie 2026
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_footer_right:
+        st.markdown("""
+        <div style="text-align: center;">
+            <p style="color: #64748b; font-size: 0.9rem;">
+                <strong>⚙️ Status sistem</strong><br>
+                <span style="color: #22c55e;">● Operațional</span>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
