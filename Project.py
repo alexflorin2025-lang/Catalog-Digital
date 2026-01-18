@@ -3014,7 +3014,7 @@ else:
 # ============================================
 # 11. INTERFAȚA PĂRINTE/ELEV - MODUL PREMIUM
 # ============================================
-elif st.session_state.role == "parent":
+if st.session_state.role == "parent":
     # Informații elev
     elev_details = get_elev_details(st.session_state.nume_elev)
     
@@ -3628,4 +3628,5 @@ if 'initial_load' not in st.session_state:
     st.session_state.initial_load = True
     with st.spinner("Se încarcă sistemul..."):
         time.sleep(0.5)
+
 
