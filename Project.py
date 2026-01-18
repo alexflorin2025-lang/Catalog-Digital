@@ -2388,7 +2388,7 @@ else:
                     
                     with col_stat_det3:
                         st.markdown("##### 📋 Statistici Observatii ")
-                                          with col_stat_det3:
+                    with col_stat_det3:
                         st.markdown("##### 📋 Statistici Observații")
                         obs_text = "<div class='custom-card'>"
                         for tip, numar in stats['observatii'].items():
@@ -3628,3 +3628,4 @@ if 'initial_load' not in st.session_state:
     st.session_state.initial_load = True
     with st.spinner("Se încarcă sistemul..."):
         time.sleep(0.5)
+
